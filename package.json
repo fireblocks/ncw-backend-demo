@@ -28,7 +28,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-oauth2-jwt-bearer": "^1.3.0",
-    "fireblocks-sdk": "https://github.com/fireblocks/ncw.git",
+    "fireblocks-sdk": "https://github.com/amper-fb/fireblocks-sdk-js.git#ncw_ns",
     "lru-cache": "^10.0.1",
     "morgan": "^1.10.0",
     "ms": "^2.1.3",
