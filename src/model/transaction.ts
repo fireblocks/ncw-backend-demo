@@ -29,6 +29,7 @@ export class Transaction extends BaseEntity {
 
   @Column({
     nullable: false,
+    // note: during tests we use typeorm with sqlite which doesn't support "json" columns
     type: process.env.NODE_ENV === "test" ? "simple-json" : "json",
   })
   details: ITransactionDetails;
