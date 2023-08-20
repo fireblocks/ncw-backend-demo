@@ -6,7 +6,7 @@ export async function patchTransactionAmountUsd(
   data: ITransactionDetails,
   cmc: CryptoClient,
 ) {
-  // for testing purposes
+  // transactions of testnet assets don't have USD rates, so we patch the amount with real asset USD rates for mock
   if (!data.amountUSD && data.amount) {
     const rate = await getUsdRateForAsset(data.assetId, cmc);
     if (rate) {

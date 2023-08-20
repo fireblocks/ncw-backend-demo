@@ -2,6 +2,8 @@ import { CryptoClient, LatestQuotesResponse } from "coinmarketcap-js";
 import { LRUCache } from "lru-cache";
 import ms from "ms";
 
+// note: example only, you might want to configure according to:
+// https://coinmarketcap.com/api/documentation/v1/#section/Standards-and-Conventions
 const cache = new LRUCache<string, LatestQuotesResponse, CryptoClient>({
   max: 100,
   ttl: ms("1 min"),

@@ -16,7 +16,7 @@ export class MessageSubscriber implements EntitySubscriberInterface {
   }
 
   afterInsert(event: InsertEvent<Message>) {
-    // TODO: this should be distributed if running multiple instances
+    // note: when running this server in multiple instances this event should be distributed to all nodes
     emitter.emit(`message:${event.entity.deviceId}`, event.entity);
     if (event.entity.physicalDeviceId) {
       emitter.emit(

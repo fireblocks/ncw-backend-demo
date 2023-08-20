@@ -115,12 +115,6 @@ export interface ISourceDest {
   virtualType?: string;
 }
 
-// export interface TransferPeerPathResponse {
-//     type: string; //	[ VAULT_ACCOUNT, EXCHANGE_ACCOUNT, INTERNAL_WALLET, EXTERNAL_WALLET, ONE_TIME_ADDRESS, NETWORK_CONNECTION, FIAT_ACCOUNT, COMPOUND, UNKNOWN ].
-//     id: string; //	The ID of the exchange account to return.
-//     name: string; //	The name of the exchange account.
-//     subType: string; //	The specific exchange, fiat account or unmanaged wallet (either INTERNAL / EXTERNAL).
-// }
 export interface NetworkRecord {
   source: TransferPeerPathResponse; //	Source of the transaction.
   destination: TransferPeerPathResponse; //	Destination of the transaction.

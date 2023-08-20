@@ -26,7 +26,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface {
   }
 
   afterInsert(event: InsertEvent<Transaction>) {
-    // TODO: this should be distributed if running multiple instances
+    // note: when running this server in multiple instances this event should be distributed to all nodes
     for (const wallet of event.entity.wallets) {
       emitter.emit(this.getWalletKey(wallet.id), event.entity);
       emitter.emit(
@@ -37,7 +37,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface {
   }
 
   afterUpdate(event: UpdateEvent<Transaction>) {
-    // TODO: this should be distributed if running multiple instances
+    // note: when running this server in multiple instances this event should be distributed to all nodes
     for (const wallet of event.entity?.wallets) {
       emitter.emit(this.getWalletKey(wallet.id), event.entity);
       emitter.emit(
