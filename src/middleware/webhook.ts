@@ -3,12 +3,6 @@ import { Request, Response, NextFunction } from "express";
 
 export const validateWebhook =
   (publicKey: string) => (req: Request, res: Response, next: NextFunction) => {
-    // TODO: disabled in devx, remove before flight and check in prod or find devx push-api key
-    if (true === true) {
-      next();
-      return;
-    }
-
     const message = JSON.stringify(req.body);
     const signature = req.headers["fireblocks-signature"];
 
