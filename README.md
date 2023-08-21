@@ -22,28 +22,27 @@ This is a demo application showcasing the capabilities of the Fireblocks platfor
 
 ## Usage
 
-### Installation
-
-```bash
-$ yarn install
-```
-
-### Running the app
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
 ### Configurations
 
-TBD
+The following environment variables are required,
+
+- General
+  - `PORT` - API listen port
+- Fireblocks
+  - PEMS - Please replace newlines with "\n" when providing PEMs.
+    - `FIREBLOCKS_WEBHOOK_PUBLIC_KEY` Fireblocks webhook public key PEM (note: sandbox and production have different keys, [docs](https://developers.fireblocks.com/docs/webhooks-notifications#validation))
+    - `FIREBLOCKS_API_SECRET` Private key PEM used for API Users (in production it's recommended to use different keys)
+  - API
+    - `FIREBLOCKS_API_KEY_NCW_SIGNER` - uuid key for API User: NCW Signer Role
+    - `FIREBLOCKS_API_KEY_NCW_ADMIN` - uuid key for API User: NCW Admin Role
+    - `FIREBLOCKS_API_BASE_URL` - Depending on your workspace environment: `https://sandbox.fireblocks.io` or `https://api.fireblocks.io/`
+- Authentication - JWT verification middleware ([NPM express-oauth2-jwt-bearer](https://www.npmjs.com/package/express-oauth2-jwt-bearer))
+  - `ISSUER_BASE_URL`=`https://YOUR_ISSUER_DOMAIN`
+  - `AUDIENCE`=`https://my-api.com`
+  - `JWKS_URI` - optional
+  - `ISSUER` - optional
+- CoinMarketCap
+  - `CMC_PRO_API_KEY` - CoinMarketCap API Key (optional for asset quotes)
 
 ### Install
 
@@ -55,6 +54,18 @@ $ yarn
 
 ```bash
 $ yarn test
+```
+
+### Build
+
+```bash
+$ yarn build
+```
+
+### Start
+
+```bash
+$ yarn start
 ```
 
 ### Migration
