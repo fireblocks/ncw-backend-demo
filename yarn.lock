@@ -2144,9 +2144,10 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-"fireblocks-sdk@https://github.com/amper-fb/fireblocks-sdk-js.git#ncw_ns":
-  version "5.4.0"
-  resolved "https://github.com/amper-fb/fireblocks-sdk-js.git#fd0d310ca4690714d4fe4aaab34646b847fc008e"
+fireblocks-sdk@^5.5.0:
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/fireblocks-sdk/-/fireblocks-sdk-5.5.0.tgz#6754592efb47bf6228041ff267b7cde572f45409"
+  integrity sha512-ihA9+gPRKwNGjkpO3MmYmT8d+9Px+xKPPGKF/B1mphgWsyr3R826nyp+syT8XhYlGf/e66i+/L6vcBriL8Fj+g==
   dependencies:
     "@notabene/pii-sdk" "^1.16.0"
     axios "^0.27.2"
