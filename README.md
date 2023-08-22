@@ -29,9 +29,9 @@ The following environment variables are required,
 - General
   - `PORT` - API listen port
 - Fireblocks
-  - PEMS - Please replace newlines with "\n" when providing PEMs.
-    - `FIREBLOCKS_WEBHOOK_PUBLIC_KEY` Fireblocks webhook public key PEM (note: sandbox and production have different keys, [docs](https://developers.fireblocks.com/docs/webhooks-notifications#validation))
-    - `FIREBLOCKS_API_SECRET` Private key PEM used for API Users (in production it's recommended to use different keys)
+  - PEMs - Please replace newlines with "\n" when providing PEMs.
+    - `FIREBLOCKS_WEBHOOK_PUBLIC_KEY` - Fireblocks webhook public key PEM (note: sandbox and production have different keys, [docs](https://developers.fireblocks.com/docs/webhooks-notifications#validation))
+    - `FIREBLOCKS_API_SECRET` - Private key PEM used for API Users (in production it's recommended to use different keys)
   - API
     - `FIREBLOCKS_API_KEY_NCW_SIGNER` - uuid key for API User: NCW Signer Role
     - `FIREBLOCKS_API_KEY_NCW_ADMIN` - uuid key for API User: NCW Admin Role
@@ -41,6 +41,12 @@ The following environment variables are required,
   - `AUDIENCE`=`https://my-api.com`
   - `JWKS_URI` - optional
   - `ISSUER` - optional
+- Database (mysql)
+  - `DB_HOST` - Database host
+  - `DB_PORT` - Database port
+  - `DB_USERNAME` - Database username
+  - `DB_PASSWORD` - Database password
+  - `DB_NAME` - Database name
 - CoinMarketCap
   - `CMC_PRO_API_KEY` - CoinMarketCap API Key (optional for asset quotes)
 
