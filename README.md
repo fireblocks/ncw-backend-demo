@@ -35,7 +35,7 @@ The following environment variables are required,
   - API
     - `FIREBLOCKS_API_KEY_NCW_SIGNER` - uuid key for API User: NCW Signer Role
     - `FIREBLOCKS_API_KEY_NCW_ADMIN` - uuid key for API User: NCW Admin Role
-    - `FIREBLOCKS_API_BASE_URL` - Depending on your workspace environment: `https://sandbox.fireblocks.io` or `https://api.fireblocks.io/`
+    - `FIREBLOCKS_API_BASE_URL` - Depending on your workspace environment: `https://sandbox-api.fireblocks.io/` or `https://api.fireblocks.io/`
 - Authentication - JWT verification middleware ([NPM express-oauth2-jwt-bearer](https://www.npmjs.com/package/express-oauth2-jwt-bearer))
   - `ISSUER_BASE_URL`=`https://YOUR_ISSUER_DOMAIN`
   - `AUDIENCE`=`https://my-api.com`
