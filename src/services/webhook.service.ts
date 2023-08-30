@@ -62,12 +62,17 @@ export async function handleNcwDeviceMessage(
   physicalDeviceId: string,
   data: any,
 ) {
-  const device = await Device.findOneOrFail({
+  const device = await Device.findOne({
     where: {
       id: deviceId,
       walletId,
     },
   });
+
+  if (!device) {
+    console.warn("ignoring NCW Device message for unknown deviceId", deviceId);
+    return;
+  }
 
   const msg = new Message();
   msg.device = device;
