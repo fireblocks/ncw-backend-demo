@@ -2,6 +2,7 @@ import { Device } from "../model/device";
 import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
 import { Clients } from "../interfaces/Clients";
+import { FindOptionsOrderValue } from "typeorm";
 
 export class DeviceService {
   constructor(private readonly clients: Clients) {}
@@ -10,6 +11,20 @@ export class DeviceService {
     return await Device.findOne({
       where: { id: deviceId },
       relations: { user: true },
+    });
+  }
+
+  async findAll(
+    sub: string,
+    walletId?: string,
+    dir: FindOptionsOrderValue = "ASC",
+  ) {
+    return await Device.find({
+      where: { walletId, user: { sub } },
+      relations: { user: true },
+      order: {
+        createdAt: dir,
+      },
     });
   }
 

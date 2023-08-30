@@ -1,6 +1,7 @@
 import { NextFunction, Response } from "express";
 import { RequestEx } from "../interfaces/requestEx";
 import { DeviceService } from "../services/device.service";
+import { create } from "domain";
 
 export class DeviceController {
   constructor(private readonly service: DeviceService) {}
@@ -26,6 +27,24 @@ export class DeviceController {
 
       const { walletId } = await this.service.assign(deviceId, sub!);
       res.json({ walletId });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async findAll(req: RequestEx, res: Response, next: NextFunction) {
+    const { auth } = req;
+    const { sub } = auth!.payload;
+
+    try {
+      const devices = await this.service.findAll(sub!);
+      res.json({
+        devices: devices.map(({ id, walletId, createdAt }) => ({
+          deviceId: id,
+          walletId,
+          createdAt: createdAt.valueOf(),
+        })),
+      });
     } catch (err) {
       next(err);
     }

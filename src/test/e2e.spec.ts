@@ -127,6 +127,13 @@ describe("e2e", () => {
       .expect(200, { walletId });
   }
 
+  async function getDevices() {
+    return await request(app)
+      .get(`/api/devices/`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
   async function getAssets() {
     return await request(app)
       .get(`/api/devices/${deviceId}/accounts/${0}/assets`)
@@ -312,6 +319,28 @@ describe("e2e", () => {
     await createUser();
     await createWallet();
     await invokeRpc();
+  });
+
+  it("should get devices", async () => {
+    await createUser();
+    {
+      const { body } = await getDevices();
+      expect(body).toMatchObject({
+        devices: [],
+      });
+    }
+    await createWallet();
+    {
+      const { body } = await getDevices();
+      expect(body).toMatchObject({
+        devices: [
+          {
+            deviceId,
+            walletId,
+          },
+        ],
+      });
+    }
   });
 
   it("should handle empty msgs", async () => {

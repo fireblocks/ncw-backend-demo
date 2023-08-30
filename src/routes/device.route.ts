@@ -18,6 +18,7 @@ export function createDeviceRoute(clients: Clients) {
 
   // note: no validateDevice during wallet assignment
   route.post("/:deviceId/assign", controller.assign.bind(controller));
+  route.get("/", controller.findAll.bind(controller));
 
   route.use("/:deviceId", validateDevice);
   route.use("/:deviceId/transactions", transactionsRoute);

@@ -1,6 +1,7 @@
 import {
   BaseEntity,
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -8,6 +9,7 @@ import {
   OneToMany,
   PrimaryColumn,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Message } from "./message";
 import { User } from "./user";
@@ -34,4 +36,10 @@ export class Device extends BaseEntity {
   @ManyToOne(() => User, (user) => user.devices, { cascade: true })
   @JoinColumn({ name: "userId", referencedColumnName: "id" })
   user: User;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
