@@ -31,7 +31,7 @@ export class Web3Controller {
 
       const session = await this.service.create(
         walletId,
-        accountId,
+        Number(accountId),
         uri,
         feeLevel,
       );
