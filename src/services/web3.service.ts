@@ -22,8 +22,7 @@ export class Web3Service {
   ) {
     const connection = await this.signer.createWeb3Connection(
       Web3ConnectionType.WALLET_CONNECT,
-      { uri, ncwId: walletId, ncwAccountId: accountId, chainIds: [], feeLevel },
-      { ncw: { walletId } },
+      { uri, ncwId: walletId, ncwAccountId: accountId, feeLevel },
     );
     return connection;
   }
