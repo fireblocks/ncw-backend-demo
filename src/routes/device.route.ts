@@ -6,11 +6,13 @@ import { createAccountsRoute } from "./account.route";
 import { createMessageRoute } from "./message.route";
 import { createTransactionRoute } from "./transaction.route";
 import { DeviceService } from "../services/device.service";
+import { createWeb3Route } from "./web3.route";
 
 export function createDeviceRoute(clients: Clients) {
   const transactionsRoute = createTransactionRoute(clients);
   const messagesRoute = createMessageRoute();
   const accountsRoute = createAccountsRoute(clients);
+  const web3Route = createWeb3Route(clients);
 
   const service = new DeviceService(clients);
   const controller = new DeviceController(service);
@@ -24,6 +26,7 @@ export function createDeviceRoute(clients: Clients) {
   route.use("/:deviceId/transactions", transactionsRoute);
   route.use("/:deviceId/accounts", accountsRoute);
   route.use("/:deviceId/messages", messagesRoute);
+  route.use("/:deviceId/web3", web3Route);
   route.post("/:deviceId/rpc", controller.rpc.bind(controller));
 
   return route;
