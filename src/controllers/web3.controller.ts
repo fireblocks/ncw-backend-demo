@@ -47,7 +47,7 @@ export class Web3Controller {
 
     try {
       const { walletId } = device!;
-      await this.service.approve(sessionId, walletId);
+      await this.service.approve(walletId, sessionId);
       return res.json({ success: true });
     } catch (err) {
       return next(err);
@@ -60,7 +60,7 @@ export class Web3Controller {
 
     try {
       const { walletId } = device!;
-      await this.service.deny(sessionId, walletId);
+      await this.service.deny(walletId, sessionId);
       return res.json({ success: true });
     } catch (err) {
       return next(err);
@@ -73,7 +73,7 @@ export class Web3Controller {
 
     try {
       const { walletId } = device!;
-      await this.service.remove(sessionId, walletId);
+      await this.service.remove(walletId, sessionId);
       return res.json({ success: true });
     } catch (err) {
       return next(err);
