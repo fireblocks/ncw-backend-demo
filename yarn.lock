@@ -2153,9 +2153,10 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-"fireblocks-sdk@https://github.com/fireblocks/fireblocks-sdk-js.git#master":
-  version "5.6.0"
-  resolved "https://github.com/fireblocks/fireblocks-sdk-js.git#48e9ca17da1f6101c5fe06fa8a2b89cae69fc4e9"
+fireblocks-sdk@^5.6.1:
+  version "5.6.1"
+  resolved "https://registry.yarnpkg.com/fireblocks-sdk/-/fireblocks-sdk-5.6.1.tgz#a09fa68ef8625fae51197cddc1a967af96d14296"
+  integrity sha512-adYumWwPXDGPOBttshtfcEnkH56c5fSXof7VqseiiWTe/26WwPJ/FLM3D6749dg+rzkB5GB8JI82EIgLNw+Bow==
   dependencies:
     "@notabene/pii-sdk" "^1.16.0"
     axios "^0.27.2"
