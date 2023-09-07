@@ -17,7 +17,10 @@ const logger = morgan("combined");
 export const visibilityTimeout = 120_000;
 export const waitForTransactionTimeout = 10_000;
 
-const ORIGIN_WEB_SDK = "http://localhost:5173";
+const ORIGIN_WEB_SDK = [
+  "http://localhost:5173",
+  "https://fireblocks.github.io",
+];
 
 function createApp(
   authOpts: AuthOptions,
