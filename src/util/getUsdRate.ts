@@ -17,7 +17,7 @@ const cache = new LRUCache<string, LatestQuotesResponse, CryptoClient>({
 export async function getUsdRateForAsset(asset: string, cmc: CryptoClient) {
   try {
     // try to mock real asset value for test assets
-    const symbol = asset.replace(/_TEST.*/, "");
+    const symbol = asset.replace(/_(TEST)?.*/, "");
     let quotes = await cache.fetch(symbol, { context: cmc });
     if (!quotes) {
       throw Error(`failed to fetch ${symbol}`);
