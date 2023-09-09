@@ -113,6 +113,7 @@ export class TransactionController {
         });
         res.json({ fee: { low, medium, high } });
       } else {
+        console.log("creating tx on Fireblocks", { ...base, ...args });
         const { id, status } = await this.service.create(walletId, {
           ...base,
           ...args,

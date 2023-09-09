@@ -57,7 +57,12 @@ export class DeviceController {
 
     try {
       const { walletId } = device!;
+      console.log(
+        `sending rpc to Fireblocks (device ${device?.id}) ->`,
+        message,
+      );
       const response = await this.service.rpc(walletId, deviceId, message);
+      console.log(`received rpc response (device ${device?.id}) <-`, response);
       res.json(response);
     } catch (err) {
       return next(err);
