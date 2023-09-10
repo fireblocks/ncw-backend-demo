@@ -28,7 +28,7 @@ The following environment variables are required,
 
 - General
   - `PORT` - API listen port
-  - `ORIGIN_WEB_SDK` - (optional) override CORS origin (comma separated for multiple values) - default: ("http://localhost:5173,https://fireblocks.github.io")
+  - `ORIGIN_WEB_SDK` - (optional) override CORS origin (comma separated for multiple values) - default: (`http://localhost:5173,https://fireblocks.github.io`)
 - Fireblocks
   - PEMs - Please replace newlines with "\n" when providing PEMs.
     - `FIREBLOCKS_WEBHOOK_PUBLIC_KEY` - Fireblocks webhook public key PEM (note: sandbox and production have different keys, [docs](https://developers.fireblocks.com/docs/webhooks-notifications#validation))
