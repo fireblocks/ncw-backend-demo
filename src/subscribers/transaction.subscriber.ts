@@ -2,12 +2,12 @@ import {
   EventSubscriber,
   EntitySubscriberInterface,
   InsertEvent,
-  IsNull,
   UpdateEvent,
 } from "typeorm";
 import EventEmitter from "events";
 import { Transaction } from "../model/transaction";
 import { TransactionStatus } from "fireblocks-sdk";
+import { isAbortError } from "../util/abortError";
 
 const emitter = new EventEmitter();
 
@@ -38,12 +38,14 @@ export class TransactionSubscriber implements EntitySubscriberInterface {
 
   afterUpdate(event: UpdateEvent<Transaction>) {
     // note: when running this server in multiple instances this event should be distributed to all nodes
-    for (const wallet of event.entity?.wallets) {
-      emitter.emit(this.getWalletKey(wallet.id), event.entity);
-      emitter.emit(
-        this.getWalletStatusKey(wallet.id, event.entity?.status),
-        event.entity,
-      );
+    if (event.entity !== undefined) {
+      for (const wallet of (event.entity as Transaction).wallets) {
+        emitter.emit(this.getWalletKey(wallet.id), event.entity);
+        emitter.emit(
+          this.getWalletStatusKey(wallet.id, event.entity?.status),
+          event.entity,
+        );
+      }
     }
   }
 
@@ -78,8 +80,8 @@ export class TransactionSubscriber implements EntitySubscriberInterface {
       }
       const txs: Transaction[] = result.filter((s) => !!s);
       return txs;
-    } catch (error: any) {
-      if (error?.name === "AbortError") {
+    } catch (error) {
+      if (isAbortError(error)) {
         return [];
       }
       throw error;

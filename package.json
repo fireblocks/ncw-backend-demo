@@ -9,6 +9,7 @@
     "migrate": "yarn run typeorm migration:run",
     "start": "yarn migrate && yarn serve",
     "test": "yarn jest",
+    "lint": "yarn eslint src --fix",
     "typeorm": "ts-node ./node_modules/typeorm/cli.js -d src/data-source.ts",
     "docker:plantuml:start": "docker run -d --name plantuml --rm -p 127.0.0.1:8080:8080 plantuml/plantuml-server:jetty",
     "docker:plantuml:stop": "docker stop plantuml",
@@ -17,6 +18,7 @@
     "prepare": "husky install"
   },
   "lint-staged": {
+    "src/**/*.ts": "eslint src --fix",
     "**/*": "prettier --write --ignore-unknown"
   },
   "author": "",
@@ -45,7 +47,13 @@
     "@types/ms": "^0.7.31",
     "@types/node": "^18.13.0",
     "@types/supertest": "^2.0.12",
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2",
     "better-sqlite3": "^8.1.0",
+    "eslint": "^8.0.1",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+    "eslint-plugin-promise": "^6.0.0",
     "husky": "^8.0.3",
     "jest": "^29.4.3",
     "jsonwebtoken": "^9.0.0",
@@ -56,6 +64,6 @@
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.1",
     "typeorm-uml": "^1.6.5",
-    "typescript": "^4.9.5"
+    "typescript": "*"
   }
 }

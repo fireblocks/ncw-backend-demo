@@ -7,7 +7,7 @@ export class Web3Controller {
   constructor(private readonly service: Web3Service) {}
 
   async find(req: RequestEx, res: Response, next: NextFunction) {
-    const { device, params } = req;
+    const { device } = req;
 
     try {
       const { walletId } = device!;

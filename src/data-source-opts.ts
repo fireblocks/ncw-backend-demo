@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-dotenv.config();
 
 import { DataSourceOptions } from "typeorm";
 import { Device } from "./model/device";
@@ -9,6 +8,7 @@ import { Wallet } from "./model/wallet";
 import { Transaction } from "./model/transaction";
 import { MessageSubscriber } from "./subscribers/message.subscriber";
 import { TransactionSubscriber } from "./subscribers/transaction.subscriber";
+dotenv.config();
 
 const opts: DataSourceOptions = {
   type: "mysql",

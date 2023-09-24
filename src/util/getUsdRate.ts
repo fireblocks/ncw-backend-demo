@@ -18,7 +18,7 @@ export async function getUsdRateForAsset(asset: string, cmc: CryptoClient) {
   try {
     // try to mock real asset value for test assets
     const symbol = asset.replace(/_(TEST)?.*/, "");
-    let quotes = await cache.fetch(symbol, { context: cmc });
+    const quotes = await cache.fetch(symbol, { context: cmc });
     if (!quotes) {
       throw Error(`failed to fetch ${symbol}`);
     }

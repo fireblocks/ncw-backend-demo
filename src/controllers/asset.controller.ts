@@ -24,7 +24,11 @@ export class AssetController {
 
     try {
       const { walletId } = device!;
-      const asset = this.service.findOne(walletId, Number(accountId), assetId);
+      const asset = await this.service.findOne(
+        walletId,
+        Number(accountId),
+        assetId,
+      );
       return res.json(asset);
     } catch (err) {
       return next(err);

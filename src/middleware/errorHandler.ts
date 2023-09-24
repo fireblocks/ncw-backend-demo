@@ -13,6 +13,8 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
 
   if (axios.isAxiosError(error)) {
     res.status(error.status ?? 500).json({ error: error.message });
+  } else if (error instanceof UnauthorizedError) {
+    res.status(401).json({ error: error.message });
   } else {
     res
       .status(error.statusCode ?? error.status ?? 500)

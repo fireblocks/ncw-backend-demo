@@ -100,7 +100,7 @@ describe("e2e", () => {
     await conn.synchronize();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     const conn = getConnection();
     return conn.close();
   });
@@ -137,6 +137,13 @@ describe("e2e", () => {
   async function getAssets() {
     return await request(app)
       .get(`/api/devices/${deviceId}/accounts/${0}/assets`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function getAsset(assetId: string) {
+    return await request(app)
+      .get(`/api/devices/${deviceId}/accounts/${0}/assets/${assetId}`)
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -204,6 +211,7 @@ describe("e2e", () => {
       .expect(200);
   }
 
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   async function webhookPush(payload: any) {
     const signer = crypto.createSign("RSA-SHA512");
     signer.update(JSON.stringify(payload));
@@ -460,6 +468,21 @@ describe("e2e", () => {
     await createUser();
     await createWallet();
     await getAssets();
+  });
+
+  it("should get asset", async () => {
+    const assetId = "BTC_TEST";
+    when(fireblocksSdk.getFeeForAsset(anything())).thenResolve({
+      low: {},
+      medium: {},
+      high: {},
+    });
+    when(ncw.getWalletAsset(walletId, 0, assetId)).thenResolve(
+      assetInfoMock[assetId],
+    );
+    await createUser();
+    await createWallet();
+    expect((await getAsset(assetId)).body.id).toBe(assetId);
   });
 
   it("should get asset address", async () => {

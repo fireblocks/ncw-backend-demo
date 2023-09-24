@@ -6,20 +6,21 @@ import CoinMarketcap from "coinmarketcap-js";
 import ms from "ms";
 
 import { staleMessageCleanup } from "./services/message.service";
+import { getEnvOrThrow } from "./util/env";
 
 dotenv.config();
 
 const port = process.env.PORT;
 
-const webhookPublicKey = process.env.FIREBLOCKS_WEBHOOK_PUBLIC_KEY!.replace(
+const webhookPublicKey = getEnvOrThrow("FIREBLOCKS_WEBHOOK_PUBLIC_KEY").replace(
   /\\n/g,
   "\n",
 );
-const apiSecret = process.env.FIREBLOCKS_API_SECRET!.replace(/\\n/g, "\n");
+const apiSecret = getEnvOrThrow("FIREBLOCKS_API_SECRET").replace(/\\n/g, "\n");
 
-const apiKeyCmc = process.env.CMC_PRO_API_KEY!;
-const apiKeyNcwSigner = process.env.FIREBLOCKS_API_KEY_NCW_SIGNER!;
-const apiKeyNcwAdmin = process.env.FIREBLOCKS_API_KEY_NCW_ADMIN!;
+const apiKeyCmc = getEnvOrThrow("CMC_PRO_API_KEY");
+const apiKeyNcwSigner = getEnvOrThrow("FIREBLOCKS_API_KEY_NCW_SIGNER");
+const apiKeyNcwAdmin = getEnvOrThrow("FIREBLOCKS_API_KEY_NCW_ADMIN");
 const apiBase = process.env.FIREBLOCKS_API_BASE_URL;
 
 const signer = new FireblocksSDK(apiSecret, apiKeyNcwSigner, apiBase);
@@ -54,7 +55,9 @@ AppDataSource.initialize()
       console.log(`Server is running at http://localhost:${port}`);
 
       // should be distributed scheduled task in production
-      setInterval(staleMessageCleanup, ms("1 hour"));
+      setInterval(() => {
+        void staleMessageCleanup();
+      }, ms("1 hour"));
     });
   })
   .catch((err) => {

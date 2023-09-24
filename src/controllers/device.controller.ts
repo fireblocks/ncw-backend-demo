@@ -1,7 +1,6 @@
 import { NextFunction, Response } from "express";
 import { RequestEx } from "../interfaces/requestEx";
 import { DeviceService } from "../services/device.service";
-import { create } from "domain";
 
 export class DeviceController {
   constructor(private readonly service: DeviceService) {}

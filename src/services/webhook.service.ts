@@ -60,6 +60,7 @@ export async function handleNcwDeviceMessage(
   deviceId: string,
   walletId: string,
   physicalDeviceId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
 ) {
   const device = await Device.findOne({

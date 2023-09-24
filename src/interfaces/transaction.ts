@@ -194,7 +194,7 @@ export interface ITransactionDetails {
   rewardsInfo: RewardsInfo; //	This field is relevant only for ALGO transactions.Both srcRewrds and destRewards will appear only for Vault to Vault transactions, otherwise you will receive only the Fireblocks' side of the transaction.
   authorizationInfo: AuthorizationInfo; //	The information about your Transaction Authorization Policy(TAP).For more information about the TAP, refer to this section in the Help Center.
   signedMessages: SignedMessage[]; //	A list of signed messages returned for raw signing.
-  extraParameters: any; // JSON object	Protocol / operation specific parameters.
+  extraParameters: object; // JSON object	Protocol / operation specific parameters.
   systemMessages: ISystemMessageInfo[]; // objects	A response from Fireblocks that communicates a message about the health of the process being performed. If this object is returned with data, you should expect potential delays or incomplete transaction statuses.
 }
 

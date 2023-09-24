@@ -17,23 +17,24 @@ const logger = morgan("combined");
 export const visibilityTimeout = 120_000;
 export const waitForTransactionTimeout = 10_000;
 
-function getOriginFromEnv() {
-  if (process.env.ORIGIN_WEB_SDK) {
-    const origin = process.env.ORIGIN_WEB_SDK;
-    return origin.split(",");
-  }
-}
-
-const ORIGIN_WEB_SDK = getOriginFromEnv() ?? [
+const DEFAULT_ORIGIN = [
   "http://localhost:5173",
   "https://fireblocks.github.io",
 ];
+
+function getOriginFromEnv(): string[] {
+  if (process.env.ORIGIN_WEB_SDK !== undefined) {
+    const origin = process.env.ORIGIN_WEB_SDK;
+    return origin.split(",");
+  }
+  return DEFAULT_ORIGIN;
+}
 
 function createApp(
   authOpts: AuthOptions,
   clients: Clients,
   webhookPublicKey: string,
-) {
+): express.Express {
   const validateUser = checkJwt(authOpts);
   const deviceRoute = createDeviceRoute(clients);
   const webhookRoute = createWebhook(clients, webhookPublicKey);
@@ -43,7 +44,7 @@ function createApp(
 
   app.use(logger);
 
-  app.use(cors({ origin: ORIGIN_WEB_SDK }));
+  app.use(cors({ origin: getOriginFromEnv() }));
   app.use(bodyParser.json({ limit: "50mb" }));
 
   app.get("/", (req: Request, res: Response) => res.send("OK"));

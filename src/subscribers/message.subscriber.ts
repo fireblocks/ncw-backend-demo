@@ -6,6 +6,7 @@ import {
 } from "typeorm";
 import { Message } from "../model/message";
 import EventEmitter from "events";
+import { isAbortError } from "../util/abortError";
 
 const emitter = new EventEmitter();
 
@@ -54,8 +55,8 @@ export class MessageSubscriber implements EntitySubscriberInterface {
       } else {
         return [];
       }
-    } catch (error: any) {
-      if (error?.name === "AbortError") {
+    } catch (error) {
+      if (isAbortError(error)) {
         return [];
       }
       throw error;

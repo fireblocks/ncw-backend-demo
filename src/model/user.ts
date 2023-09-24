@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Device } from "./device";
-import { Message } from "./message";
 
 @Entity()
 export class User extends BaseEntity {

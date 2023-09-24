@@ -33,7 +33,7 @@ export class DeviceService {
     const { walletId } = await this.clients.admin.NCW.createWallet();
 
     // note: creating a default first account
-    const account = await this.clients.admin.NCW.createWalletAccount(walletId);
+    await this.clients.admin.NCW.createWalletAccount(walletId);
 
     const wallet = new Wallet();
     wallet.id = walletId;

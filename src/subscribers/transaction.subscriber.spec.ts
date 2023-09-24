@@ -46,7 +46,7 @@ describe("transaction subscriber", () => {
     await device.save();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     const conn = getConnection();
     return conn.close();
   });
