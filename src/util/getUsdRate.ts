@@ -14,13 +14,25 @@ const cache = new LRUCache<string, LatestQuotesResponse, CryptoClient>({
     }),
 });
 
+const banlist = new LRUCache<string, Date>({
+  max: 1000,
+  ttl: ms("1 day"),
+});
+
 export async function getUsdRateForAsset(asset: string, cmc: CryptoClient) {
   try {
     // try to mock real asset value for test assets
     const symbol = asset.replace(/_(TEST)?.*/, "");
+    if (banlist.has(symbol)) {
+      return null;
+    }
     const quotes = await cache.fetch(symbol, { context: cmc });
     if (!quotes) {
       throw Error(`failed to fetch ${symbol}`);
+    }
+    if (!quotes.data[symbol]) {
+      banlist.set(symbol, new Date());
+      throw Error(`no quote data for ${symbol}`);
     }
     return quotes.data[symbol].quote["USD"].price;
   } catch (e) {
