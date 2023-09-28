@@ -5,6 +5,19 @@ import { AssetService } from "../services/asset.service";
 export class AssetController {
   constructor(private readonly service: AssetService) {}
 
+  async summary(req: RequestEx, res: Response, next: NextFunction) {
+    const { device, params } = req;
+    const { accountId } = params;
+
+    try {
+      const { walletId } = device!;
+      const summary = await this.service.summary(walletId, Number(accountId));
+      return res.json(summary);
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   async findAll(req: RequestEx, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId } = params;

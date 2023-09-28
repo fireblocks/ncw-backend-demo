@@ -11,7 +11,7 @@ import { Message } from "../model/message";
 import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
 import { FireblocksSDK, NCW, TransactionStatus } from "fireblocks-sdk";
-import { anything, instance, mock, when } from "ts-mockito";
+import { anyString, anything, instance, mock, when } from "ts-mockito";
 import { AuthOptions } from "express-oauth2-jwt-bearer";
 import { sign, Algorithm } from "jsonwebtoken";
 import { MessageSubscriber } from "../subscribers/message.subscriber";
@@ -21,6 +21,7 @@ import { CryptoClient } from "coinmarketcap-js";
 import { mockQuoteResponse } from "./mockQuoteResponse";
 import { assetInfoMock } from "./assetInfo.mock";
 import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
+import { TAssetSummary } from "../services/asset.service";
 
 const generateKeyPair = util.promisify(crypto.generateKeyPair);
 
@@ -151,6 +152,13 @@ describe("e2e", () => {
   async function getAssetAddress(asset: string) {
     return await request(app)
       .get(`/api/devices/${deviceId}/accounts/${0}/assets/${asset}/address`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function getAssetSummary() {
+    return await request(app)
+      .get(`/api/devices/${deviceId}/accounts/${0}/assets/summary`)
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -503,5 +511,45 @@ describe("e2e", () => {
     await createWallet();
 
     expect((await getAssetAddress(asset)).body).toEqual(address);
+  });
+
+  it("should get asset summary", async () => {
+    const asset = "BTC_TEST";
+    const address: NCW.WalletAssetAddress = {
+      accountName: walletId,
+      accountId: "0",
+      asset,
+      address: "123",
+      addressType: "aaa",
+    };
+    const balance = {
+      id: "aaa",
+      total: "0",
+    };
+
+    when(fireblocksSdk.getFeeForAsset(anything())).thenResolve({
+      low: {},
+      medium: {},
+      high: {},
+    });
+    when(ncw.getWalletAssets(walletId, 0)).thenResolve({
+      data: Object.values(assetInfoMock),
+    });
+    when(ncw.getWalletAssetAddresses(walletId, 0, anyString())).thenResolve({
+      data: [address],
+    });
+    when(ncw.getWalletAssetBalance(walletId, 0, anyString())).thenResolve(
+      balance,
+    );
+
+    await createUser();
+    await createWallet();
+    const { body } = await getAssetSummary();
+    expect(Object.keys(body)).toEqual(Object.keys(assetInfoMock));
+    for (const [id, entry] of Object.entries<TAssetSummary>(body)) {
+      expect(entry.balance).toEqual(balance);
+      expect(entry.address).toEqual(address);
+      expect(entry.asset.id).toEqual(id);
+    }
   });
 });
