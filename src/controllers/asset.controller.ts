@@ -18,6 +18,15 @@ export class AssetController {
     }
   }
 
+  async getSupportedAssets(req: RequestEx, res: Response, next: NextFunction) {
+    try {
+      const assets = await this.service.getSupportedAssets();
+      return res.json(assets);
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   async findAll(req: RequestEx, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId } = params;

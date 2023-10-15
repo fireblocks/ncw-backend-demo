@@ -13,6 +13,7 @@ export type IAssetSummaryMap = { [assetId: string]: TAssetSummary };
 
 export class AssetService {
   private feeCache: LRUCache<string, EstimateFeeResponse>;
+  private supportedAssets?: Array<NCW.WalletAssetResponse> = undefined;
 
   constructor(private readonly clients: Clients) {
     this.feeCache = new LRUCache<string, EstimateFeeResponse>({
@@ -20,6 +21,23 @@ export class AssetService {
       ttl: ms("1m"),
       fetchMethod: (assetId) => this.clients.admin.getFeeForAsset(assetId),
     });
+  }
+
+  async getSupportedAssets() {
+    if (!this.supportedAssets) {
+      const assets: Array<NCW.WalletAssetResponse> = [];
+      let cursor = undefined;
+      do {
+        const results = await this.clients.admin.NCW.getSupportedAssets({
+          pageCursor: cursor,
+        });
+        assets.push(...results.data);
+        cursor = results.paging?.next;
+      } while (cursor);
+      this.supportedAssets = assets;
+    }
+
+    return this.supportedAssets;
   }
 
   async findAll(walletId: string, accountId: number) {
