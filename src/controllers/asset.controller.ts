@@ -1,6 +1,7 @@
 import { NextFunction, Response } from "express";
 import { RequestEx } from "../interfaces/requestEx";
 import { AssetService } from "../services/asset.service";
+import { NCW } from "fireblocks-sdk";
 
 export class AssetController {
   constructor(private readonly service: AssetService) {}
@@ -19,8 +20,25 @@ export class AssetController {
   }
 
   async getSupportedAssets(req: RequestEx, res: Response, next: NextFunction) {
+    const { device, params } = req;
+    const { accountId } = params;
+
     try {
-      const assets = await this.service.getSupportedAssets();
+      const { walletId } = device!;
+
+      const all = (
+        await this.service.findAll(walletId, Number(accountId), false, false)
+      ).reduce<{ [assetId: string]: NCW.WalletAssetResponse }>((acc, v) => {
+        acc[v.id] = v;
+        return acc;
+      }, {});
+
+      const assets = (await this.service.getSupportedAssets()).filter(
+        (asset) =>
+          !(asset.id in all) &&
+          (asset.type !== "BASE_ASSET" || asset.baseAsset in all),
+      );
+
       return res.json(assets);
     } catch (err) {
       return next(err);
