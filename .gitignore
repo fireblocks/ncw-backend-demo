@@ -4,3 +4,4 @@ node_modules
 .nvmrc
 *.log
 .yarn
+.DS_Store

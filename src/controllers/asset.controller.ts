@@ -36,7 +36,7 @@ export class AssetController {
       const assets = (await this.service.getSupportedAssets()).filter(
         (asset) =>
           !(asset.id in all) &&
-          (asset.type !== "BASE_ASSET" || asset.baseAsset in all),
+          (asset.type === "BASE_ASSET" || asset.baseAsset in all),
       );
 
       return res.json(assets);
