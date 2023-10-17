@@ -3,15 +3,19 @@ import {
   Web3ConnectionFeeLevel,
   Web3ConnectionType,
 } from "fireblocks-sdk";
+import { fetchAll } from "../util/fetch-all";
 
 export class Web3Service {
   constructor(private readonly signer: FireblocksSDK) {}
 
   async find(walletId: string) {
-    const connections = await this.signer.getWeb3Connections({
-      filter: { walletId },
-    });
-    return connections.data;
+    const connections = await fetchAll((page) =>
+      this.signer.getWeb3Connections({
+        filter: { walletId },
+        ...page,
+      }),
+    );
+    return connections;
   }
 
   async create(

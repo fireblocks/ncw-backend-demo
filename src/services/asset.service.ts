@@ -3,6 +3,7 @@ import { Clients } from "../interfaces/Clients";
 import { getUsdRateForAsset } from "../util/getUsdRate";
 import { LRUCache } from "lru-cache";
 import { AssetResponse, EstimateFeeResponse, NCW } from "fireblocks-sdk";
+import { fetchAll } from "../util/fetch-all";
 
 export type TAssetSummary = {
   asset: NCW.WalletAssetResponse;
@@ -13,25 +14,45 @@ export type IAssetSummaryMap = { [assetId: string]: TAssetSummary };
 
 export class AssetService {
   private feeCache: LRUCache<string, EstimateFeeResponse>;
+  private supportedAssets?: Array<NCW.WalletAssetResponse> = undefined;
 
   constructor(private readonly clients: Clients) {
     this.feeCache = new LRUCache<string, EstimateFeeResponse>({
       max: 100,
       ttl: ms("1m"),
-      fetchMethod: (assetId) => this.clients.admin.getFeeForAsset(assetId),
+      fetchMethod: async (assetId) => {
+        try {
+          return await this.clients.admin.getFeeForAsset(assetId);
+        } catch (e) {
+          console.warn(`failed getting fee for ${assetId}`, e);
+        }
+      },
     });
   }
 
-  async findAll(walletId: string, accountId: number) {
-    const assets = await this.clients.admin.NCW.getWalletAssets(
-      walletId,
-      accountId,
+  async getSupportedAssets(): Promise<Array<NCW.WalletAssetResponse>> {
+    if (!this.supportedAssets) {
+      const assets = await fetchAll((page) =>
+        this.clients.admin.NCW.getSupportedAssets(page),
+      );
+      this.supportedAssets = assets;
+    }
+
+    return this.supportedAssets;
+  }
+
+  async findAll(walletId: string, accountId: number, fee = true, rate = true) {
+    const assets = await fetchAll((page) =>
+      this.clients.admin.NCW.getWalletAssets(walletId, accountId, page),
     );
+
     return await Promise.all(
-      assets.data.map(async (asset) => ({
+      assets.map(async (asset) => ({
         ...asset,
-        fee: await this.feeCache.fetch(asset.id),
-        rate: await getUsdRateForAsset(asset.symbol, this.clients.cmc),
+        fee: fee ? await this.feeCache.fetch(asset.id) : undefined,
+        rate: rate
+          ? await getUsdRateForAsset(asset.symbol, this.clients.cmc)
+          : undefined,
       })),
     );
   }

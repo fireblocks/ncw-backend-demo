@@ -10,6 +10,10 @@ export function createAssetRoute(clients: Clients) {
 
   route.get("/", controller.findAll.bind(controller));
   route.get("/summary", controller.summary.bind(controller));
+  route.get(
+    "/supported_assets",
+    controller.getSupportedAssets.bind(controller),
+  );
   route.post("/:assetId", controller.addAsset.bind(controller));
   route.get("/:assetId", controller.findOne.bind(controller));
   route.get("/:assetId/balance", controller.getBalance.bind(controller));

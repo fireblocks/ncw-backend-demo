@@ -470,7 +470,7 @@ describe("e2e", () => {
       medium: {},
       high: {},
     });
-    when(ncw.getWalletAssets(walletId, 0)).thenResolve({
+    when(ncw.getWalletAssets(walletId, 0, anything())).thenResolve({
       data: Object.values(assetInfoMock),
     });
     await createUser();
@@ -532,7 +532,7 @@ describe("e2e", () => {
       medium: {},
       high: {},
     });
-    when(ncw.getWalletAssets(walletId, 0)).thenResolve({
+    when(ncw.getWalletAssets(walletId, 0, anything())).thenResolve({
       data: Object.values(assetInfoMock),
     });
     when(ncw.getWalletAssetAddresses(walletId, 0, anyString())).thenResolve({
