@@ -20,7 +20,13 @@ export class AssetService {
     this.feeCache = new LRUCache<string, EstimateFeeResponse>({
       max: 100,
       ttl: ms("1m"),
-      fetchMethod: (assetId) => this.clients.admin.getFeeForAsset(assetId),
+      fetchMethod: async (assetId) => {
+        try {
+          return await this.clients.admin.getFeeForAsset(assetId);
+        } catch (e) {
+          console.warn(`failed getting fee for ${assetId}`, e);
+        }
+      },
     });
   }
 
