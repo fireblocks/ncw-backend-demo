@@ -22,6 +22,7 @@ import { mockQuoteResponse } from "./mockQuoteResponse";
 import { assetInfoMock } from "./assetInfo.mock";
 import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
 import { TAssetSummary } from "../services/asset.service";
+import { mockInfoResponse } from "./mockInfoResponse";
 
 const generateKeyPair = util.promisify(crypto.generateKeyPair);
 
@@ -57,6 +58,10 @@ describe("e2e", () => {
 
   when(cmc.latestQuotes(anything())).thenResolve(
     mockQuoteResponse(1, ...Object.keys(assetInfoMock)),
+  );
+
+  when(cmc.info(anything())).thenResolve(
+    mockInfoResponse(...Object.keys(assetInfoMock)),
   );
 
   let publicKey: string, privateKey: string;
