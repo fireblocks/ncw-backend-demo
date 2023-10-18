@@ -11,6 +11,7 @@ import {
   getMetadataForAsset,
   getMetadataForAssets,
 } from "../util/cmc/getMetadata";
+import { Metadata } from "coinmarketcap-js";
 
 export type TAssetSummary = {
   asset: NCW.WalletAssetResponse;
@@ -53,9 +54,9 @@ export class AssetService {
         );
         return {
           ...results,
-          data: results.data.map((a) => ({
-            ...a,
-            iconUrl: meta[a.symbol]?.logo,
+          data: results.data.map((asset) => ({
+            ...asset,
+            iconUrl: meta[asset.symbol]?.logo,
           })),
         };
       });
@@ -72,30 +73,43 @@ export class AssetService {
     rate = true,
     meta = true,
   ): Promise<Array<IAsset>> {
-    const assets = await fetchAll((page) =>
-      this.clients.admin.NCW.getWalletAssets(walletId, accountId, page),
-    );
+    const assets = await fetchAll<IAsset>(async (page) => {
+      const response = await this.clients.admin.NCW.getWalletAssets(
+        walletId,
+        accountId,
+        page,
+      );
 
-    const rates = rate
-      ? await getUsdRateForAssets(
-          assets.map((a) => a.symbol),
-          this.clients.cmc,
-        )
-      : {};
-    const metadata = meta
-      ? await getMetadataForAssets(
-          assets.map((a) => a.symbol),
-          this.clients.cmc,
-        )
-      : {};
+      const [rates, metadata] = await Promise.all([
+        rate
+          ? await getUsdRateForAssets(
+              response.data.map((a) => a.symbol),
+              this.clients.cmc,
+            )
+          : Promise.resolve<Record<string, number>>({}),
+        meta
+          ? await getMetadataForAssets(
+              response.data.map((a) => a.symbol),
+              this.clients.cmc,
+            )
+          : Promise.resolve<Record<string, Metadata>>({}),
+      ]);
+
+      return {
+        ...response,
+        data: response.data.map((asset) => ({
+          ...asset,
+          rate: rates[asset.symbol],
+          iconUrl: metadata[asset.symbol]?.logo,
+        })),
+      };
+    });
 
     return await Promise.all(
       assets.map(async (asset) => ({
         ...asset,
         fee:
           asset.hasFee && fee ? await this.feeCache.fetch(asset.id) : undefined,
-        iconUrl: metadata[asset.symbol]?.logo,
-        rate: rates[asset.symbol],
       })),
     );
   }
