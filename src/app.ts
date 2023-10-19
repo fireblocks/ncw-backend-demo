@@ -44,7 +44,13 @@ function createApp(
 
   app.use(logger);
 
-  app.use(cors({ origin: getOriginFromEnv() }));
+  app.use(
+    cors({
+      origin: getOriginFromEnv(),
+      maxAge: 600,
+    }),
+  );
+
   app.use(bodyParser.json({ limit: "50mb" }));
 
   app.get("/", (req: Request, res: Response) => res.send("OK"));
