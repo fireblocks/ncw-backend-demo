@@ -35,24 +35,28 @@ export async function getMetadataForAssets(
       return {};
     }
 
-    const params: IExtendedInfoQueryParams = {
-      symbol: symbols.filter((s) => cache.has(s)).join(","),
-      aux: "logo",
-      skipInvalid: true,
-    };
-    const meta = await cmc.info(params);
+    const missingSymbols = symbols.filter((s) => cache.has(s)).join(",");
+    if (missingSymbols.length) {
+      const params: IExtendedInfoQueryParams = {
+        symbol: missingSymbols,
+        aux: "logo",
+        skipInvalid: true,
+      };
 
-    if (!meta?.data) {
-      throw Error(`failed to fetch metadata`);
-    }
+      const meta = await cmc.info(params);
 
-    for (const symbol of symbols) {
-      if (!meta.data[symbol]) {
-        banlist.set(symbol, new Date());
-        continue;
+      if (!meta?.data) {
+        throw Error(`failed to fetch metadata`);
       }
 
-      cache.set(symbol, meta.data[symbol]);
+      for (const symbol of symbols) {
+        if (!meta.data[symbol]) {
+          banlist.set(symbol, new Date());
+          continue;
+        }
+
+        cache.set(symbol, meta.data[symbol]);
+      }
     }
 
     return Object.fromEntries(

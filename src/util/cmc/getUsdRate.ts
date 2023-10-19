@@ -31,23 +31,26 @@ export async function getUsdRateForAssets(
       return {};
     }
 
-    const quotes = await cmc.latestQuotes({
-      symbol: symbols.filter((c) => !cache.has(c)).join(","),
-      convert: "usd",
-      skipInvalid: true,
-    });
+    const missingSymbols = symbols.filter((s) => cache.has(s)).join(",");
+    if (missingSymbols.length) {
+      const quotes = await cmc.latestQuotes({
+        symbol: missingSymbols,
+        convert: "usd",
+        skipInvalid: true,
+      });
 
-    if (!quotes?.data) {
-      throw Error(`failed to fetch quotes`);
-    }
-
-    for (const symbol of symbols) {
-      if (!quotes.data[symbol]) {
-        banlist.set(symbol, new Date());
-        continue;
+      if (!quotes?.data) {
+        throw Error(`failed to fetch quotes`);
       }
 
-      cache.set(symbol, quotes.data[symbol].quote["USD"]);
+      for (const symbol of symbols) {
+        if (!quotes.data[symbol]) {
+          banlist.set(symbol, new Date());
+          continue;
+        }
+
+        cache.set(symbol, quotes.data[symbol].quote["USD"]);
+      }
     }
 
     return Object.fromEntries(
