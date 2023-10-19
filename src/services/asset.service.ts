@@ -14,10 +14,11 @@ import {
 import { Metadata } from "coinmarketcap-js";
 
 export type TAssetSummary = {
-  asset: NCW.WalletAssetResponse;
+  asset: IAsset;
   address: NCW.WalletAssetAddress;
   balance: AssetResponse;
 };
+
 export type IAssetSummaryMap = { [assetId: string]: TAssetSummary };
 
 export interface IAsset extends NCW.WalletAssetResponse {
@@ -32,7 +33,7 @@ export class AssetService {
 
   constructor(private readonly clients: Clients) {
     this.feeCache = new LRUCache<string, EstimateFeeResponse>({
-      max: 100,
+      max: 1000,
       ttl: ms("1m"),
       fetchMethod: async (assetId) => {
         try {
@@ -152,12 +153,12 @@ export class AssetService {
   }
 
   async addAsset(walletId: string, accountId: number, assetId: string) {
-    const asset = await this.clients.signer.NCW.activateWalletAsset(
+    const address = await this.clients.signer.NCW.activateWalletAsset(
       walletId,
       Number(accountId),
       assetId,
     );
-    return asset;
+    return address;
   }
 
   async getBalance(walletId: string, accountId: number, assetId: string) {
