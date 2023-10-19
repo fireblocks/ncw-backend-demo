@@ -31,7 +31,7 @@ export async function getUsdRateForAssets(
       return {};
     }
 
-    const missingSymbols = symbols.filter((s) => cache.has(s)).join(",");
+    const missingSymbols = symbols.filter((s) => !cache.has(s)).join(",");
     if (missingSymbols.length) {
       const quotes = await cmc.latestQuotes({
         symbol: missingSymbols,
