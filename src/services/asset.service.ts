@@ -60,7 +60,7 @@ export class AssetService {
             iconUrl: meta[asset.symbol]?.logo,
           })),
         };
-      });
+      }, 50);
       this.supportedAssets = assets;
     }
 
@@ -104,7 +104,7 @@ export class AssetService {
           iconUrl: metadata[asset.symbol]?.logo,
         })),
       };
-    });
+    }, 50);
 
     return await Promise.all(
       assets.map(async (asset) => ({
