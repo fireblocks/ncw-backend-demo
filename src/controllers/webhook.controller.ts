@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Clients } from "../interfaces/Clients";
 import { ITransactionCreatedMessagePayload } from "../interfaces/transaction";
-import { patchTransactionAmountUsd } from "../util/patchTransactionAmountUsd";
+import { patchTransactionAmountUsd } from "../util/cmc/patchTransactionAmountUsd";
 import {
   handleNcwDeviceMessage,
   handleTransactionCreated,

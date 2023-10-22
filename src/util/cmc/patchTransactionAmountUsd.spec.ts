@@ -9,8 +9,8 @@ import {
 import {
   ITransactionDetails,
   TransactionSubStatus,
-} from "../interfaces/transaction";
-import { mockQuoteResponse } from "../test/mockQuoteResponse";
+} from "../../interfaces/transaction";
+import { mockQuoteResponse } from "../../test/mockQuoteResponse";
 
 function createTx(
   txId: string,
