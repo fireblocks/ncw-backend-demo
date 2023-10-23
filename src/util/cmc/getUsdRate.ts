@@ -31,10 +31,10 @@ export async function getUsdRateForAssets(
       return {};
     }
 
-    const missingSymbols = symbols.filter((s) => !cache.has(s)).join(",");
+    const missingSymbols = symbols.filter((s) => !cache.has(s));
     if (missingSymbols.length) {
       const quotes = await cmc.latestQuotes({
-        symbol: missingSymbols,
+        symbol: missingSymbols.join(","),
         convert: "usd",
         skipInvalid: true,
       });

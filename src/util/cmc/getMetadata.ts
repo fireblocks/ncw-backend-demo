@@ -35,10 +35,10 @@ export async function getMetadataForAssets(
       return {};
     }
 
-    const missingSymbols = symbols.filter((s) => !cache.has(s)).join(",");
+    const missingSymbols = symbols.filter((s) => !cache.has(s));
     if (missingSymbols.length) {
       const params: IExtendedInfoQueryParams = {
-        symbol: missingSymbols,
+        symbol: missingSymbols.join(","),
         aux: "logo",
         skipInvalid: true,
       };
