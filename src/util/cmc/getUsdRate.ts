@@ -43,7 +43,7 @@ export async function getUsdRateForAssets(
         throw Error(`failed to fetch quotes`);
       }
 
-      for (const symbol of symbols) {
+      for (const symbol of missingSymbols) {
         if (!quotes.data[symbol]) {
           banlist.set(symbol, new Date());
           continue;

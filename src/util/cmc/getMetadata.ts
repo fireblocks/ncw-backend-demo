@@ -49,7 +49,7 @@ export async function getMetadataForAssets(
         throw Error(`failed to fetch metadata`);
       }
 
-      for (const symbol of symbols) {
+      for (const symbol of missingSymbols) {
         if (!meta.data[symbol]) {
           banlist.set(symbol, new Date());
           continue;
