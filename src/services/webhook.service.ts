@@ -6,6 +6,11 @@ import { Message } from "../model/message";
 import { Wallet } from "../model/wallet";
 import { Transaction } from "../model/transaction";
 
+const StatusesToAddDestinationWallets: TransactionStatus[] = [
+  TransactionStatus.CONFIRMING,
+  TransactionStatus.COMPLETED,
+];
+
 export async function handleTransactionStatusUpdated(
   id: string,
   status: TransactionStatus,
@@ -18,6 +23,9 @@ export async function handleTransactionStatusUpdated(
   tx.status = status;
   tx.details = data;
   tx.lastUpdated = new Date(data.lastUpdated);
+  if (StatusesToAddDestinationWallets.includes(data.status)) {
+    await patchAffectedWallets(tx, data, "destination");
+  }
   await tx.save();
 }
 
@@ -33,25 +41,7 @@ export async function handleTransactionCreated(
   tx.lastUpdated = new Date(data.lastUpdated);
   tx.details = data;
 
-  const wallets = new Set(
-    [
-      data.source,
-      data.destination,
-      ...[...(data.destinations ? data.destinations : [])].map(
-        (d) => d.destination,
-      ),
-    ]
-      .filter((p) => p.type === PeerType.END_USER_WALLET)
-      .map((p) => p.walletId!),
-  );
-
-  if (wallets.size) {
-    tx.wallets = await Wallet.find({
-      where: { id: In([...wallets.values()]) },
-    });
-  } else {
-    tx.wallets = [];
-  }
+  await patchAffectedWallets(tx, data, "source");
 
   await tx.save();
 }
@@ -80,4 +70,45 @@ export async function handleNcwDeviceMessage(
   msg.physicalDeviceId = physicalDeviceId;
   msg.message = JSON.stringify(data);
   await msg.save();
+}
+
+async function patchAffectedWallets(
+  tx: Transaction,
+  data: ITransactionDetails,
+  direction: "source" | "destination",
+) {
+  const peerDetails =
+    direction === "source"
+      ? [data.source]
+      : [
+          data.destination,
+          ...[...(data.destinations ? data.destinations : [])].map(
+            (d) => d.destination,
+          ),
+        ];
+
+  const wallets = new Set(
+    peerDetails
+      .filter((p) => p.type === PeerType.END_USER_WALLET)
+      .map((p) => p.walletId!),
+  );
+  const affectedWallets = wallets.size
+    ? await Wallet.find({
+        where: { id: In([...wallets.values()]) },
+      })
+    : [];
+
+  if (affectedWallets.length) {
+    if (tx.wallets?.length) {
+      const walletsToAdd = affectedWallets.filter(
+        (affected) =>
+          !tx.wallets.some((oldWallet) => affected.id === oldWallet.id),
+      );
+      tx.wallets.push(...walletsToAdd);
+    } else {
+      tx.wallets = affectedWallets;
+    }
+  } else {
+    tx.wallets = tx.wallets ?? [];
+  }
 }
