@@ -22,7 +22,7 @@ export class Transaction extends BaseEntity {
   @Column({
     type: "datetime",
     nullable: false,
-    default: () => "NOW()",
+    default: () => "NOW(6)",
     precision: 6,
   })
   @Index()
@@ -31,7 +31,7 @@ export class Transaction extends BaseEntity {
   @Column({
     type: "datetime",
     nullable: false,
-    default: () => "NOW()",
+    default: () => "NOW(6)",
     precision: 6,
   })
   @Index()

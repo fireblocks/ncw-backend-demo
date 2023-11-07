@@ -5,10 +5,10 @@ export class DatePrecision1699354090663 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE \`transaction\` CHANGE \`createdAt\` \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+      `ALTER TABLE \`transaction\` CHANGE \`createdAt\` \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`,
     );
     await queryRunner.query(
-      `ALTER TABLE \`transaction\` CHANGE \`lastUpdated\` \`lastUpdated\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+      `ALTER TABLE \`transaction\` CHANGE \`lastUpdated\` \`lastUpdated\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`,
     );
   }
 
