@@ -19,11 +19,21 @@ export class Transaction extends BaseEntity {
   @Index()
   status: TransactionStatus;
 
-  @Column({ type: "datetime", nullable: false, default: () => "NOW()" })
+  @Column({
+    type: "datetime",
+    nullable: false,
+    default: () => "NOW()",
+    precision: 6,
+  })
   @Index()
   createdAt: Date;
 
-  @Column({ type: "datetime", nullable: false, default: () => "NOW()" })
+  @Column({
+    type: "datetime",
+    nullable: false,
+    default: () => "NOW()",
+    precision: 6,
+  })
   @Index()
   lastUpdated: Date;
 
