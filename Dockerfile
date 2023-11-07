@@ -6,8 +6,7 @@ RUN npm config set scripts-prepend-node-path true
 COPY --chown=node:node yarn.lock /opt/services/ncw-demo/
 COPY --chown=node:node package.json /opt/services/ncw-demo/
 WORKDIR /opt/services/ncw-demo
-# note setting network-concurrency=1 to mitigate yarn lodash error https://github.com/yarnpkg/yarn/issues/6312
-RUN yarn --network-concurrency 1 --frozen-lockfile
+RUN yarn --frozen-lockfile
 COPY  --chown=node:node *.json *.ts /opt/services/ncw-demo/
 COPY  --chown=node:node src/ /opt/services/ncw-demo/src/
 RUN yarn build && yarn cache clean
