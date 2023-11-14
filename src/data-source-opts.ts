@@ -8,6 +8,7 @@ import { Wallet } from "./model/wallet";
 import { Transaction } from "./model/transaction";
 import { MessageSubscriber } from "./subscribers/message.subscriber";
 import { TransactionSubscriber } from "./subscribers/transaction.subscriber";
+import { Passphrase } from "./model/passphrase";
 dotenv.config();
 
 const opts: DataSourceOptions = {
@@ -19,7 +20,7 @@ const opts: DataSourceOptions = {
   database: process.env.DB_NAME,
   synchronize: false,
   logging: false,
-  entities: [User, Wallet, Device, Message, Transaction],
+  entities: [User, Wallet, Device, Message, Transaction, Passphrase],
   subscribers: [MessageSubscriber, TransactionSubscriber],
   migrations: ["./dist/migrations/*.js"],
 };

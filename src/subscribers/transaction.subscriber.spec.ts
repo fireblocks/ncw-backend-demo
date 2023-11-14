@@ -14,6 +14,7 @@ import {
   TransactionOperation,
   TransactionStatus,
 } from "fireblocks-sdk";
+import { Passphrase } from "../model/passphrase";
 
 describe("transaction subscriber", () => {
   const walletId = "33";
@@ -25,7 +26,7 @@ describe("transaction subscriber", () => {
       database: ":memory:",
       dropSchema: true,
       subscribers: [TransactionSubscriber],
-      entities: [Wallet, Device, Message, User, Transaction],
+      entities: [Wallet, Device, Message, User, Transaction, Passphrase],
       synchronize: true,
       logging: false,
     });

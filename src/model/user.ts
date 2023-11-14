@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Device } from "./device";
+import { Passphrase } from "./passphrase";
 
 @Entity()
 export class User extends BaseEntity {
@@ -19,4 +20,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Device, (device) => device.userId)
   devices: Device[];
+
+  @OneToMany(() => Passphrase, (passphrase) => passphrase.userId)
+  passphrases: Passphrase[];
 }

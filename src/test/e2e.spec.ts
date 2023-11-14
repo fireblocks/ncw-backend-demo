@@ -23,6 +23,7 @@ import { assetInfoMock } from "./assetInfo.mock";
 import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
 import { TAssetSummary } from "../services/asset.service";
 import { mockInfoResponse } from "./mockInfoResponse";
+import { Passphrase, Location } from "../model/passphrase";
 
 const generateKeyPair = util.promisify(crypto.generateKeyPair);
 
@@ -99,7 +100,7 @@ describe("e2e", () => {
       database: ":memory:",
       dropSchema: true,
       subscribers: [MessageSubscriber, TransactionSubscriber],
-      entities: [Wallet, Device, Message, User, Transaction],
+      entities: [Wallet, Device, Message, User, Transaction, Passphrase],
       synchronize: true,
       logging: false,
     });
@@ -164,6 +165,28 @@ describe("e2e", () => {
   async function getAssetSummary() {
     return await request(app)
       .get(`/api/devices/${deviceId}/accounts/${0}/assets/summary`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function getPassphrases() {
+    return await request(app)
+      .get(`/api/passphrase/`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function createPassphrase(passphraseId: string, location: Location) {
+    return await request(app)
+      .post(`/api/passphrase/${passphraseId}`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ location })
+      .expect(200);
+  }
+
+  async function getPassphrase(passphraseId: string) {
+    return await request(app)
+      .get(`/api/passphrase/${passphraseId}`)
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -556,5 +579,21 @@ describe("e2e", () => {
       expect(entry.address).toEqual(address);
       expect(entry.asset.id).toEqual(id);
     }
+  });
+
+  it("should be able to save and get passphrase info", async () => {
+    await createUser();
+    const passphraseId = crypto.randomUUID();
+    const location = Location.Google;
+    await createPassphrase(passphraseId, location);
+    const passphrase = await getPassphrase(passphraseId);
+    expect(passphrase.body).toEqual({ location });
+    const passphrases = await getPassphrases();
+    expect(passphrases.body.passphrases[0]).toEqual(
+      expect.objectContaining({
+        passphraseId,
+        location,
+      }),
+    );
   });
 });
