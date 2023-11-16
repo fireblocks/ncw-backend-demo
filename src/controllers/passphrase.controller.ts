@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { RequestEx } from "../interfaces/requestEx";
 import { PassphraseService } from "../services/passphrase.service";
-import { Location } from "../model/passphrase";
+import { PassphraseLocation } from "../model/passphrase";
 
 export class PassphraseController {
   constructor(private readonly service: PassphraseService) {}
@@ -13,11 +13,15 @@ export class PassphraseController {
     const { location } = req.body;
 
     try {
-      if (typeof location !== "string" || !(location in Location)) {
+      if (typeof location !== "string" || !(location in PassphraseLocation)) {
         return res.status(400).send("Invalid location");
       }
 
-      await this.service.create(sub!, passphraseId, location as Location);
+      await this.service.create(
+        sub!,
+        passphraseId,
+        location as PassphraseLocation,
+      );
       res.json({ passphraseId });
     } catch (err) {
       next(err);

@@ -23,7 +23,7 @@ import { assetInfoMock } from "./assetInfo.mock";
 import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
 import { TAssetSummary } from "../services/asset.service";
 import { mockInfoResponse } from "./mockInfoResponse";
-import { Passphrase, Location } from "../model/passphrase";
+import { Passphrase, PassphraseLocation } from "../model/passphrase";
 
 const generateKeyPair = util.promisify(crypto.generateKeyPair);
 
@@ -176,7 +176,10 @@ describe("e2e", () => {
       .expect(200);
   }
 
-  async function createPassphrase(passphraseId: string, location: Location) {
+  async function createPassphrase(
+    passphraseId: string,
+    location: PassphraseLocation,
+  ) {
     return await request(app)
       .post(`/api/passphrase/${passphraseId}`)
       .set("Authorization", `Bearer ${accessToken}`)
@@ -584,7 +587,7 @@ describe("e2e", () => {
   it("should be able to save and get passphrase info", async () => {
     await createUser();
     const passphraseId = crypto.randomUUID();
-    const location = Location.Google;
+    const location = PassphraseLocation.GoogleDrive;
     await createPassphrase(passphraseId, location);
     const passphrase = await getPassphrase(passphraseId);
     expect(passphrase.body).toEqual({ location });

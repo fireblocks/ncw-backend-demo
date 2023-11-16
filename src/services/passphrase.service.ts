@@ -1,6 +1,6 @@
 import { User } from "../model/user";
 import { FindOptionsOrderValue } from "typeorm";
-import { Location, Passphrase } from "../model/passphrase";
+import { PassphraseLocation, Passphrase } from "../model/passphrase";
 
 export class PassphraseService {
   async findOne(sub: string, passphraseId: string) {
@@ -20,7 +20,7 @@ export class PassphraseService {
     });
   }
 
-  async create(sub: string, id: string, location: Location) {
+  async create(sub: string, id: string, location: PassphraseLocation) {
     const user = await User.findOneByOrFail({ sub });
     const passphrase = new Passphrase();
     passphrase.id = id;

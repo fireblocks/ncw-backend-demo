@@ -11,9 +11,9 @@ import {
 
 import { User } from "./user";
 
-export enum Location {
-  Google = "Google",
-  Apple = "Apple",
+export enum PassphraseLocation {
+  GoogleDrive = "GoogleDrive",
+  iCloud = "iCloud",
 }
 
 @Entity()
@@ -25,7 +25,7 @@ export class Passphrase extends BaseEntity {
   userId: number;
 
   @Column({ nullable: false })
-  location: Location;
+  location: PassphraseLocation;
 
   @ManyToOne(() => User, (user) => user.passphrases, { cascade: true })
   @JoinColumn({ name: "userId", referencedColumnName: "id" })
