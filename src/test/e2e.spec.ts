@@ -250,6 +250,20 @@ describe("e2e", () => {
       .expect(200);
   }
 
+  async function getWallets() {
+    return await request(app)
+      .get(`/api/wallets/`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function getLatestBackup(walletId: string) {
+    return await request(app)
+      .get(`/api/wallets/${walletId}/backup/latest`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   async function webhookPush(payload: any) {
     const signer = crypto.createSign("RSA-SHA512");
@@ -598,5 +612,24 @@ describe("e2e", () => {
         location,
       }),
     );
+  });
+
+  it("should be able to get latest backup with passphrase location", async () => {
+    await createUser();
+    await createWallet();
+    expect((await getWallets()).body).toEqual({ wallets: [{ walletId }] });
+    const passphraseId = crypto.randomUUID();
+    const location = PassphraseLocation.GoogleDrive;
+    await createPassphrase(passphraseId, location);
+    when(ncw.getLatestBackup(walletId)).thenResolve({
+      passphraseId,
+      createdAt: 0,
+      keys: [],
+    });
+    expect((await getLatestBackup(walletId)).body).toEqual({
+      passphraseId,
+      location,
+      createdAt: 0,
+    });
   });
 });
