@@ -10,7 +10,7 @@ export class PassphraseService {
     });
   }
 
-  async findAll(sub: string, dir: FindOptionsOrderValue = "DESC") {
+  async findAll(sub: string, dir: FindOptionsOrderValue = "ASC") {
     return await Passphrase.find({
       where: { user: { sub } },
       relations: { user: true },
