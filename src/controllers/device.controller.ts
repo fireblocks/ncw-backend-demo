@@ -31,6 +31,36 @@ export class DeviceController {
     }
   }
 
+  async join(req: RequestEx, res: Response, next: NextFunction) {
+    const { auth, params } = req;
+    const { sub } = auth!.payload;
+    const { deviceId, walletId } = params;
+
+    try {
+      // check if device was already assigned wallet
+      const prevDevice = await this.service.findOne(deviceId);
+      if (prevDevice) {
+        if (prevDevice.user.sub !== sub) {
+          return res.status(401).send();
+        }
+        if (prevDevice.walletId) {
+          return res.json({ walletId: prevDevice.walletId });
+        }
+
+        throw new Error("Invalid state");
+      }
+
+      const { walletId: id } = await this.service.join(
+        deviceId,
+        sub!,
+        walletId!,
+      );
+      res.json({ walletId: id });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async findAll(req: RequestEx, res: Response, next: NextFunction) {
     const { auth } = req;
     const { sub } = auth!.payload;
