@@ -34,7 +34,8 @@ export class DeviceController {
   async join(req: RequestEx, res: Response, next: NextFunction) {
     const { auth, params } = req;
     const { sub } = auth!.payload;
-    const { deviceId, walletId } = params;
+    const { deviceId } = params;
+    const { walletId } = req.body;
 
     try {
       // check if device was already assigned wallet
@@ -53,7 +54,7 @@ export class DeviceController {
       const { walletId: id } = await this.service.join(
         deviceId,
         sub!,
-        walletId!,
+        walletId,
       );
       res.json({ walletId: id });
     } catch (err) {
