@@ -5,6 +5,7 @@ import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
 import { MessageSubscriber } from "./message.subscriber";
 import { Transaction } from "../model/transaction";
+import { Passphrase } from "../model/passphrase";
 
 describe("message subscriber", () => {
   const deviceId = "123";
@@ -16,7 +17,7 @@ describe("message subscriber", () => {
       database: ":memory:",
       dropSchema: true,
       subscribers: [MessageSubscriber],
-      entities: [Wallet, Device, Message, User, Transaction],
+      entities: [Wallet, Device, Message, User, Transaction, Passphrase],
       synchronize: true,
       logging: false,
     });
