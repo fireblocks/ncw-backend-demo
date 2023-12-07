@@ -2713,7 +2713,7 @@ find-up@^5.0.0:
     locate-path "^6.0.0"
     path-exists "^4.0.0"
 
-fireblocks-sdk@^5.13.10:
+fireblocks-sdk@^5.13.0:
   version "5.13.0"
   resolved "https://registry.yarnpkg.com/fireblocks-sdk/-/fireblocks-sdk-5.13.0.tgz#bf0f1aae18d6677cafc1643ae1aea7a67f604291"
   integrity sha512-eKPJSYbOPEXf+qvB0Ux6ZfdkuPKZZIfVPf23oMy3thi7a8dKrUmq5RqRVL/wqZXdRLZDpR4dL4XPMGav4sO6KQ==
