@@ -50,19 +50,14 @@ export class DeviceService {
 
   async join(deviceId: string, sub: string, walletId: string) {
     const user = await User.findOneByOrFail({ sub });
-    const wallet = await Wallet.findOneByOrFail({ id: walletId });
-    const walletBelongToUser = await Device.findOne({
-      where: {
-        walletId,
+    const wallet = await Wallet.findOneByOrFail({
+      id: walletId,
+      devices: {
         user: {
           sub,
         },
       },
     });
-
-    if (!walletBelongToUser) {
-      throw new Error("wallet does not belong to user");
-    }
 
     const device = new Device();
     device.id = deviceId;
