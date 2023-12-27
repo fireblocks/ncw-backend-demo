@@ -45,6 +45,9 @@ export class DeviceController {
           return res.status(401).send();
         }
         if (prevDevice.walletId) {
+          if (prevDevice.walletId !== walletId) {
+            return res.status(401).send();
+          }
           return res.json({ walletId: prevDevice.walletId });
         }
 
