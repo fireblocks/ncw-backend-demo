@@ -11,6 +11,8 @@ import { UserController } from "./controllers/user.controller";
 import { UserService } from "./services/user.service";
 import { Clients } from "./interfaces/Clients";
 import { errorHandler } from "./middleware/errorHandler";
+import { createPassphraseRoute } from "./routes/passphrase.route";
+import { createWalletRoute } from "./routes/wallet.route";
 
 const logger = morgan("combined");
 
@@ -36,7 +38,9 @@ function createApp(
   webhookPublicKey: string,
 ): express.Express {
   const validateUser = checkJwt(authOpts);
+  const walletRoute = createWalletRoute(clients);
   const deviceRoute = createDeviceRoute(clients);
+  const passphraseRoute = createPassphraseRoute();
   const webhookRoute = createWebhook(clients, webhookPublicKey);
   const userContoller = new UserController(new UserService());
 
@@ -56,7 +60,9 @@ function createApp(
   app.get("/", (req: Request, res: Response) => res.send("OK"));
 
   app.post("/api/login", validateUser, userContoller.login.bind(userContoller));
+  app.use("/api/passphrase", validateUser, passphraseRoute);
   app.use("/api/devices", validateUser, deviceRoute);
+  app.use("/api/wallets", validateUser, walletRoute);
   app.use("/api/webhook", webhookRoute);
 
   app.use(errorHandler);
