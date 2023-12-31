@@ -18,7 +18,7 @@ export class WalletService {
   }
 
   async getLatestBackup(walletId: string) {
-    const { passphraseId, createdAt } =
+    const { passphraseId, createdAt, keys } =
       await this.clients.signer.NCW.getLatestBackup(walletId);
 
     const passphrase = await Passphrase.findOneByOrFail({ id: passphraseId });
@@ -27,6 +27,7 @@ export class WalletService {
       passphraseId,
       location: passphrase.location,
       createdAt,
+      deviceId: keys[0].deviceId,
     };
   }
 }
