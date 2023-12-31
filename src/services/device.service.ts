@@ -48,6 +48,27 @@ export class DeviceService {
     return { walletId };
   }
 
+  async join(deviceId: string, sub: string, walletId: string) {
+    const user = await User.findOneByOrFail({ sub });
+    const wallet = await Wallet.findOneByOrFail({
+      id: walletId,
+      devices: {
+        user: {
+          sub,
+        },
+      },
+    });
+
+    const device = new Device();
+    device.id = deviceId;
+    device.wallet = wallet;
+    device.user = user;
+
+    await device.save();
+
+    return { walletId };
+  }
+
   async rpc(walletId: string, deviceId: string, message: string) {
     const response = await this.clients.signer.NCW.invokeWalletRpc(
       walletId,
