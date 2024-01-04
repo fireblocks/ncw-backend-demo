@@ -11,7 +11,7 @@ dotenv.config();
 
 const port = process.env.PORT;
 
-const DEFAULT_ORIGIN = [
+export const DEFAULT_ORIGIN = [
   "http://localhost:5173",
   "https://fireblocks.github.io",
 ];

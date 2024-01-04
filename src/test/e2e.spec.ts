@@ -24,6 +24,7 @@ import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
 import { TAssetSummary } from "../services/asset.service";
 import { mockInfoResponse } from "./mockInfoResponse";
 import { Passphrase, PassphraseLocation } from "../model/passphrase";
+import { DEFAULT_ORIGIN } from "../server";
 
 const generateKeyPair = util.promisify(crypto.generateKeyPair);
 
@@ -93,6 +94,7 @@ describe("e2e", () => {
         cmc: instance(cmc),
       },
       publicKey,
+      DEFAULT_ORIGIN,
     );
 
     app = a.app;
