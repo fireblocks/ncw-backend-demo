@@ -13,6 +13,8 @@ import { Clients } from "./interfaces/Clients";
 import { errorHandler } from "./middleware/errorHandler";
 import { createPassphraseRoute } from "./routes/passphrase.route";
 import { createWalletRoute } from "./routes/wallet.route";
+import { Server } from "socket.io";
+import { Device } from "./model/device";
 
 const logger = morgan("combined");
 
@@ -36,10 +38,11 @@ function createApp(
   authOpts: AuthOptions,
   clients: Clients,
   webhookPublicKey: string,
-): express.Express {
+): { app: express.Express; io: Server } {
   const validateUser = checkJwt(authOpts);
   const walletRoute = createWalletRoute(clients);
-  const deviceRoute = createDeviceRoute(clients);
+  const { route: deviceRoute, service: deviceService } =
+    createDeviceRoute(clients);
   const passphraseRoute = createPassphraseRoute();
   const webhookRoute = createWebhook(clients, webhookPublicKey);
   const userContoller = new UserController(new UserService());
@@ -67,7 +70,29 @@ function createApp(
 
   app.use(errorHandler);
 
-  return app;
+  const io = new Server();
+
+  io.on("connection", (socket) => {
+    // TODO:
+    socket.on("login", () => {});
+
+    socket.on("rpc", async (deviceId: string, message: string, cb) => {
+      // TODO:
+      const device = await Device.findOne({ where: { id: deviceId } });
+      if (!device) {
+        return;
+      }
+
+      const response = await deviceService.rpc(
+        device.walletId,
+        deviceId,
+        message,
+      );
+      await cb(response);
+    });
+  });
+
+  return { app, io };
 }
 
 export { createApp };

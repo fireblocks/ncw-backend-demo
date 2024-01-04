@@ -30,5 +30,5 @@ export function createDeviceRoute(clients: Clients) {
   route.use("/:deviceId/web3", web3Route);
   route.post("/:deviceId/rpc", controller.rpc.bind(controller));
 
-  return route;
+  return { route, service };
 }

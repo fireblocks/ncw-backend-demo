@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import { AppDataSource } from "./data-source";
 import CoinMarketcap from "coinmarketcap-js";
 import ms from "ms";
-
 import { staleMessageCleanup } from "./services/message.service";
 import { getEnvOrThrow } from "./util/env";
 
@@ -45,13 +44,13 @@ const clients = {
   cmc: CoinMarketcap(apiKeyCmc).crypto,
 };
 
-const app = createApp(authOptions, clients, webhookPublicKey);
+const { app, io } = createApp(authOptions, clients, webhookPublicKey);
 
 AppDataSource.initialize()
   .then(() => {
     console.log("Data Source has been initialized!");
 
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
 
       // should be distributed scheduled task in production
@@ -59,6 +58,8 @@ AppDataSource.initialize()
         void staleMessageCleanup();
       }, ms("1 hour"));
     });
+
+    io.attach(server);
   })
   .catch((err) => {
     console.error("Error during Data Source initialization", err);

@@ -85,7 +85,7 @@ describe("e2e", () => {
   });
 
   beforeEach(async () => {
-    app = createApp(
+    const a = createApp(
       opts,
       {
         admin: instance(fireblocksSdk),
@@ -94,6 +94,8 @@ describe("e2e", () => {
       },
       publicKey,
     );
+
+    app = a.app;
 
     const conn = await createConnection({
       type: "better-sqlite3",
