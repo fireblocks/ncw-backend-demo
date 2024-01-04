@@ -11,6 +11,19 @@ dotenv.config();
 
 const port = process.env.PORT;
 
+const DEFAULT_ORIGIN = [
+  "http://localhost:5173",
+  "https://fireblocks.github.io",
+];
+
+function getOriginFromEnv(): string[] {
+  if (process.env.ORIGIN_WEB_SDK !== undefined) {
+    const origin = process.env.ORIGIN_WEB_SDK;
+    return origin.split(",");
+  }
+  return DEFAULT_ORIGIN;
+}
+
 const webhookPublicKey = getEnvOrThrow("FIREBLOCKS_WEBHOOK_PUBLIC_KEY").replace(
   /\\n/g,
   "\n",
@@ -44,7 +57,8 @@ const clients = {
   cmc: CoinMarketcap(apiKeyCmc).crypto,
 };
 
-const { app, io } = createApp(authOptions, clients, webhookPublicKey);
+const origin = getOriginFromEnv();
+const { app, io } = createApp(authOptions, clients, webhookPublicKey, origin);
 
 AppDataSource.initialize()
   .then(() => {
@@ -59,7 +73,12 @@ AppDataSource.initialize()
       }, ms("1 hour"));
     });
 
-    io.attach(server);
+    io.attach(server, {
+      cors: {
+        origin,
+        methods: ["GET", "POST"],
+      },
+    });
   })
   .catch((err) => {
     console.error("Error during Data Source initialization", err);

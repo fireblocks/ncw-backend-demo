@@ -21,23 +21,11 @@ const logger = morgan("combined");
 export const visibilityTimeout = 120_000;
 export const waitForTransactionTimeout = 10_000;
 
-const DEFAULT_ORIGIN = [
-  "http://localhost:5173",
-  "https://fireblocks.github.io",
-];
-
-function getOriginFromEnv(): string[] {
-  if (process.env.ORIGIN_WEB_SDK !== undefined) {
-    const origin = process.env.ORIGIN_WEB_SDK;
-    return origin.split(",");
-  }
-  return DEFAULT_ORIGIN;
-}
-
 function createApp(
   authOpts: AuthOptions,
   clients: Clients,
   webhookPublicKey: string,
+  origin: string[],
 ): { app: express.Express; io: Server } {
   const validateUser = checkJwt(authOpts);
   const walletRoute = createWalletRoute(clients);
@@ -53,7 +41,7 @@ function createApp(
 
   app.use(
     cors({
-      origin: getOriginFromEnv(),
+      origin,
       maxAge: 600,
     }),
   );
