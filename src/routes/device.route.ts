@@ -8,6 +8,8 @@ import { createTransactionRoute } from "./transaction.route";
 import { DeviceService } from "../services/device.service";
 import { createWeb3Route } from "./web3.route";
 
+import compression from "compression";
+
 export function createDeviceRoute(clients: Clients) {
   const transactionsRoute = createTransactionRoute(clients);
   const messagesRoute = createMessageRoute();
@@ -28,7 +30,7 @@ export function createDeviceRoute(clients: Clients) {
   route.use("/:deviceId/accounts", accountsRoute);
   route.use("/:deviceId/messages", messagesRoute);
   route.use("/:deviceId/web3", web3Route);
-  route.post("/:deviceId/rpc", controller.rpc.bind(controller));
+  route.post("/:deviceId/rpc", compression(), controller.rpc.bind(controller));
 
   return { route, service };
 }
