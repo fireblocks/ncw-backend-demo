@@ -6,6 +6,15 @@ import CoinMarketcap from "coinmarketcap-js";
 import ms from "ms";
 import { staleMessageCleanup } from "./services/message.service";
 import { getEnvOrThrow } from "./util/env";
+import { HttpsAgent } from "agentkeepalive";
+
+const keepaliveAgent = new HttpsAgent({
+  keepAlive: true,
+  maxSockets: 100,
+  maxFreeSockets: 10,
+  timeout: 60000, // active socket keepalive for 60 seconds
+  freeSocketTimeout: 30000, // free socket keepalive for 30 seconds
+});
 
 dotenv.config();
 
@@ -35,8 +44,16 @@ const apiKeyNcwSigner = getEnvOrThrow("FIREBLOCKS_API_KEY_NCW_SIGNER");
 const apiKeyNcwAdmin = getEnvOrThrow("FIREBLOCKS_API_KEY_NCW_ADMIN");
 const apiBase = process.env.FIREBLOCKS_API_BASE_URL;
 
-const signer = new FireblocksSDK(apiSecret, apiKeyNcwSigner, apiBase);
-const admin = new FireblocksSDK(apiSecret, apiKeyNcwAdmin, apiBase);
+const signer = new FireblocksSDK(
+  apiSecret,
+  apiKeyNcwSigner,
+  apiBase,
+  undefined,
+  { httpsAgent: keepaliveAgent },
+);
+const admin = new FireblocksSDK(apiSecret, apiKeyNcwAdmin, apiBase, undefined, {
+  httpsAgent: keepaliveAgent,
+});
 
 // You must provide either an 'issuerBaseURL', or an 'issuer' and 'jwksUri'
 const issuerBaseURL = process.env.ISSUER_BASE_URL;

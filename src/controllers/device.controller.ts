@@ -90,7 +90,9 @@ export class DeviceController {
 
     try {
       const { walletId } = device!;
+      const start = Date.now();
       const response = await this.service.rpc(walletId, deviceId, message);
+      res.setMetric("rpc", Date.now() - start, "Backend Rpc duration");
       res.json(response);
     } catch (err) {
       return next(err);

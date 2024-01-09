@@ -15,7 +15,7 @@ import { createPassphraseRoute } from "./routes/passphrase.route";
 import { createWalletRoute } from "./routes/wallet.route";
 import { Server } from "socket.io";
 import { Device } from "./model/device";
-
+import serverTiming from "server-timing";
 const logger = morgan("combined");
 
 export const visibilityTimeout = 120_000;
@@ -46,15 +46,25 @@ function createApp(
     }),
   );
 
+  app.use(serverTiming());
+
   app.use(bodyParser.json({ limit: "50mb" }));
 
   app.get("/", (req: Request, res: Response) => res.send("OK"));
 
+  app.use((_req, res, next) => {
+    res.startTime("api", "api request");
+    next();
+  });
   app.post("/api/login", validateUser, userContoller.login.bind(userContoller));
   app.use("/api/passphrase", validateUser, passphraseRoute);
   app.use("/api/devices", validateUser, deviceRoute);
   app.use("/api/wallets", validateUser, walletRoute);
   app.use("/api/webhook", webhookRoute);
+  app.use((_req, res, next) => {
+    res.endTime("api");
+    next();
+  });
 
   app.use(errorHandler);
 
@@ -66,6 +76,9 @@ function createApp(
 
     socket.on("rpc", async (deviceId: string, message: string, cb) => {
       // TODO:
+      // console.log("received rpc", deviceId, message);
+
+      const start = Date.now();
       const device = await Device.findOne({ where: { id: deviceId } });
       if (!device) {
         return;
@@ -76,7 +89,9 @@ function createApp(
         deviceId,
         message,
       );
+      console.log(`rpc: calling back ${deviceId}`, Date.now() - start);
       await cb(response);
+      console.log(`rpc: total ${deviceId}`, Date.now() - start);
     });
   });
 
