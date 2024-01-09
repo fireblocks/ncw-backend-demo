@@ -90,6 +90,9 @@ AppDataSource.initialize()
       }, ms("1 hour"));
     });
 
+    // set higher keepalive timeout (default: 5s)
+    server.keepAliveTimeout = 60_000;
+
     io.attach(server, {
       cors: {
         origin,
