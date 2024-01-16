@@ -8,6 +8,7 @@ COPY --chown=node:node package.json /opt/services/ncw-demo/
 WORKDIR /opt/services/ncw-demo
 RUN yarn --frozen-lockfile
 COPY  --chown=node:node *.json *.ts /opt/services/ncw-demo/
+COPY  --chown=node:node types/ /opt/services/ncw-demo/types/
 COPY  --chown=node:node src/ /opt/services/ncw-demo/src/
 RUN yarn build && yarn cache clean
 ENTRYPOINT ["/sbin/tini",  "-g", "--", "npm", "run", "start"]
