@@ -1,11 +1,10 @@
-import { NextFunction, Response } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { Request, NextFunction, Response } from "express";
 import { DeviceService } from "../services/device.service";
 
 export class DeviceController {
   constructor(private readonly service: DeviceService) {}
 
-  async assign(req: RequestEx, res: Response, next: NextFunction) {
+  async assign(req: Request, res: Response, next: NextFunction) {
     const { auth, params } = req;
     const { sub } = auth!.payload;
     const { deviceId } = params;
@@ -31,7 +30,7 @@ export class DeviceController {
     }
   }
 
-  async join(req: RequestEx, res: Response, next: NextFunction) {
+  async join(req: Request, res: Response, next: NextFunction) {
     const { auth, params } = req;
     const { sub } = auth!.payload;
     const { deviceId } = params;
@@ -65,7 +64,7 @@ export class DeviceController {
     }
   }
 
-  async findAll(req: RequestEx, res: Response, next: NextFunction) {
+  async findAll(req: Request, res: Response, next: NextFunction) {
     const { auth } = req;
     const { sub } = auth!.payload;
 
@@ -83,7 +82,7 @@ export class DeviceController {
     }
   }
 
-  async rpc(req: RequestEx, res: Response, next: NextFunction) {
+  async rpc(req: Request, res: Response, next: NextFunction) {
     const { params, device } = req;
     const { deviceId } = params;
     const { message } = req.body;

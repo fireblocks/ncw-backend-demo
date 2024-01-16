@@ -1,11 +1,9 @@
 import { ErrorRequestHandler } from "express";
-import { UnauthorizedError } from "express-oauth2-jwt-bearer";
+
 import axios from "axios";
 
 export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
-  if (!(error instanceof UnauthorizedError)) {
-    console.error(error);
-  }
+  console.error("error handling request", error);
 
   if (res.headersSent) {
     return next(error);
@@ -13,8 +11,6 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
 
   if (axios.isAxiosError(error)) {
     res.status(error.response?.status ?? 500).json({ error: error.message });
-  } else if (error instanceof UnauthorizedError) {
-    res.status(401).json({ error: error.message });
   } else {
     res
       .status(error.statusCode ?? error.status ?? 500)

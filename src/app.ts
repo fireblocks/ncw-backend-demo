@@ -2,9 +2,7 @@ import morgan from "morgan";
 import cors from "cors";
 import express, { Express, Request, Response } from "express";
 import bodyParser from "body-parser";
-
-import { AuthOptions } from "express-oauth2-jwt-bearer";
-import { checkJwt } from "./middleware/jwt";
+import { AuthOptions, checkJwt } from "./middleware/jwt";
 import { createDeviceRoute } from "./routes/device.route";
 import { createWebhook } from "./routes/webhook.route";
 import { UserController } from "./controllers/user.controller";
@@ -16,6 +14,9 @@ import { createWalletRoute } from "./routes/wallet.route";
 import { Server } from "socket.io";
 import { Device } from "./model/device";
 import serverTiming from "server-timing";
+import { jwtVerify } from "jose";
+import { RpcResponse } from "./interfaces/RpcResponse";
+
 const logger = morgan("combined");
 
 export const visibilityTimeout = 120_000;
@@ -70,29 +71,60 @@ function createApp(
 
   const io = new Server();
 
-  io.on("connection", (socket) => {
-    // TODO:
-    socket.on("login", () => {});
+  io.on("connection", async (socket) => {
+    const token = socket.handshake?.auth?.token;
+    const { verify, key } = authOpts;
 
-    socket.on("rpc", async (deviceId: string, message: string, cb) => {
-      // TODO:
-      // console.log("received rpc", deviceId, message);
-
-      const start = Date.now();
-      const device = await Device.findOne({ where: { id: deviceId } });
-      if (!device) {
-        return;
+    try {
+      console.log("connected", token);
+      if (!token) {
+        throw new Error("no token provided");
       }
 
-      const response = await deviceService.rpc(
-        device.walletId,
-        deviceId,
-        message,
-      );
-      console.log(`rpc: calling back ${deviceId}`, Date.now() - start);
-      await cb(response);
-      console.log(`rpc: total ${deviceId}`, Date.now() - start);
-    });
+      const payload = await jwtVerify(token, key, verify);
+      socket.handshake.auth.payload = payload;
+    } catch (e) {
+      console.error("failed authenticating socket", e);
+      socket.disconnect(true);
+      return;
+    }
+
+    socket.on(
+      "rpc",
+      async (
+        deviceId: string,
+        message: string,
+        cb: (response: RpcResponse) => void,
+      ) => {
+        const { payload } = socket.handshake.auth;
+        const device = await Device.findOne({
+          where: { id: deviceId, user: { sub: payload.sub } },
+        });
+        if (!device) {
+          cb({ error: { message: "Device not found" } });
+          return;
+        }
+
+        try {
+          const response = await deviceService.rpc(
+            device.walletId,
+            deviceId,
+            message,
+          );
+          cb(response);
+          return;
+        } catch (e) {
+          console.error("failed invoking RPC", e);
+          cb({
+            error: {
+              message: "Failed invoking RPC",
+              code: -1,
+            },
+          });
+          return;
+        }
+      },
+    );
   });
 
   return { app, io };

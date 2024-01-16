@@ -12,7 +12,6 @@ import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
 import { FireblocksSDK, NCW, TransactionStatus } from "fireblocks-sdk";
 import { anyString, anything, instance, mock, when } from "ts-mockito";
-import { AuthOptions } from "express-oauth2-jwt-bearer";
 import { sign, Algorithm } from "jsonwebtoken";
 import { MessageSubscriber } from "../subscribers/message.subscriber";
 import { Transaction } from "../model/transaction";
@@ -25,6 +24,7 @@ import { TAssetSummary } from "../services/asset.service";
 import { mockInfoResponse } from "./mockInfoResponse";
 import { Passphrase, PassphraseLocation } from "../model/passphrase";
 import { DEFAULT_ORIGIN } from "../server";
+import { AuthOptions } from "../middleware/jwt";
 
 const generateKeyPair = util.promisify(crypto.generateKeyPair);
 
@@ -33,18 +33,24 @@ const walletId = "123";
 const deviceId = "010";
 
 const algorithm: Algorithm = "HS256";
+const secret = "test-secret";
+const issuer = "test-issuer";
+const audience = "test-audience";
+
 const opts: AuthOptions = {
-  issuer: "test-issuer",
-  audience: "test-audience",
-  secret: "test-secret",
-  tokenSigningAlg: algorithm,
+  key: () => crypto.createSecretKey(secret, "utf8"),
+  verify: {
+    issuer,
+    audience,
+    algorithms: [algorithm],
+  },
 };
 
 function signJwt(payload: object) {
-  return sign(payload, opts.secret!, {
+  return sign(payload, secret, {
     algorithm,
-    issuer: opts.issuer,
-    audience: opts.audience,
+    issuer,
+    audience,
     expiresIn: "1h",
   });
 }
@@ -628,10 +634,18 @@ describe("e2e", () => {
     when(ncw.getLatestBackup(walletId)).thenResolve({
       passphraseId,
       createdAt: 0,
-      keys: [],
+      keys: [
+        {
+          deviceId,
+          keyId: "123",
+          publicKey,
+          algorithm,
+        },
+      ],
     });
     expect((await getLatestBackup(walletId)).body).toEqual({
       passphraseId,
+      deviceId,
       location,
       createdAt: 0,
     });

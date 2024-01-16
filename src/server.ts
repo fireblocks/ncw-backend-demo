@@ -7,6 +7,8 @@ import ms from "ms";
 import { staleMessageCleanup } from "./services/message.service";
 import { getEnvOrThrow } from "./util/env";
 import { HttpsAgent } from "agentkeepalive";
+import { AuthOptions } from "./middleware/jwt";
+import { createRemoteJWKSet } from "jose";
 
 const keepaliveAgent = new HttpsAgent({
   keepAlive: true,
@@ -61,13 +63,6 @@ const issuer = process.env.ISSUER;
 const jwksUri = process.env.JWKS_URI;
 const audience = process.env.AUDIENCE;
 
-const authOptions = {
-  jwksUri,
-  issuer,
-  issuerBaseURL,
-  audience,
-};
-
 const clients = {
   signer,
   admin,
@@ -75,12 +70,25 @@ const clients = {
 };
 
 const origin = getOriginFromEnv();
-const { app, io } = createApp(authOptions, clients, webhookPublicKey, origin);
+// TODO: need to fetch issuerBaseURL /.well-known?
+const authOptions: AuthOptions = {
+  key: createRemoteJWKSet(new URL(jwksUri ?? issuerBaseURL!)),
+  verify: {
+    issuer,
+    audience,
+  },
+};
 
 AppDataSource.initialize()
   .then(() => {
     console.log("Data Source has been initialized!");
 
+    const { app, io } = createApp(
+      authOptions,
+      clients,
+      webhookPublicKey,
+      origin,
+    );
     const server = app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
 

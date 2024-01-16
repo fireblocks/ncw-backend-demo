@@ -1,9 +1,8 @@
-import { Handler, Response, NextFunction } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { Request, Handler, Response, NextFunction } from "express";
 import { Wallet } from "../model/wallet";
 
 export const validateWallet: Handler = async function (
-  req: RequestEx,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) {

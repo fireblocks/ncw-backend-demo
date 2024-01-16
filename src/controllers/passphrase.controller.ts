@@ -1,12 +1,11 @@
-import { NextFunction, Response } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { Request, NextFunction, Response } from "express";
 import { PassphraseService } from "../services/passphrase.service";
 import { PassphraseLocation } from "../model/passphrase";
 
 export class PassphraseController {
   constructor(private readonly service: PassphraseService) {}
 
-  async create(req: RequestEx, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction) {
     const { auth, params } = req;
     const { passphraseId } = params;
     const { sub } = auth!.payload;
@@ -28,7 +27,7 @@ export class PassphraseController {
     }
   }
 
-  async findOne(req: RequestEx, res: Response, next: NextFunction) {
+  async findOne(req: Request, res: Response, next: NextFunction) {
     const { auth, params } = req;
     const { passphraseId } = params;
     const { sub } = auth!.payload;
@@ -46,7 +45,7 @@ export class PassphraseController {
     }
   }
 
-  async findAll(req: RequestEx, res: Response, next: NextFunction) {
+  async findAll(req: Request, res: Response, next: NextFunction) {
     const { auth } = req;
     const { sub } = auth!.payload;
 
