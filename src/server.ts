@@ -9,6 +9,7 @@ import { getEnvOrThrow } from "./util/env";
 import { HttpsAgent } from "agentkeepalive";
 import { AuthOptions } from "./middleware/jwt";
 import { createRemoteJWKSet } from "jose";
+import { Issuer } from "openid-client";
 
 const keepaliveAgent = new HttpsAgent({
   keepAlive: true,
@@ -71,17 +72,33 @@ const clients = {
 
 const origin = getOriginFromEnv();
 // TODO: need to fetch issuerBaseURL /.well-known?
-const authOptions: AuthOptions = {
-  key: createRemoteJWKSet(new URL(jwksUri ?? issuerBaseURL!)),
-  verify: {
-    issuer,
-    audience,
-  },
-};
 
 AppDataSource.initialize()
-  .then(() => {
+  .then(async () => {
     console.log("Data Source has been initialized!");
+
+    let authOptions: AuthOptions;
+
+    if (issuerBaseURL) {
+      const issuerClient = await Issuer.discover(issuerBaseURL);
+      authOptions = {
+        key: createRemoteJWKSet(new URL(issuerClient.metadata.jwks_uri!)),
+        verify: {
+          issuer: issuerClient.metadata.issuer,
+          audience,
+        },
+      };
+    } else if (jwksUri) {
+      authOptions = {
+        key: createRemoteJWKSet(new URL(jwksUri)),
+        verify: {
+          issuer,
+          audience,
+        },
+      };
+    } else {
+      throw new Error("Failed to resolve issuer");
+    }
 
     const { app, io } = createApp(
       authOptions,
