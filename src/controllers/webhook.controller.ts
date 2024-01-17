@@ -3,9 +3,9 @@ import { Clients } from "../interfaces/Clients";
 import { ITransactionCreatedMessagePayload } from "../interfaces/transaction";
 import { patchTransactionAmountUsd } from "../util/cmc/patchTransactionAmountUsd";
 import {
-  handleNcwDeviceMessage,
   handleTransactionCreated,
   handleTransactionStatusUpdated,
+  handleWalletEventMessage,
 } from "../services/webhook.service";
 
 export class WebhookController {
@@ -21,17 +21,6 @@ export class WebhookController {
       );
 
       switch (type) {
-        case "NCW_DEVICE_MESSAGE": {
-          const { walletId, deviceId, physicalDeviceId, data } = req.body;
-          await handleNcwDeviceMessage(
-            deviceId,
-            walletId,
-            physicalDeviceId,
-            data,
-          );
-          return res.status(200).send("ok");
-        }
-
         case "TRANSACTION_CREATED": {
           const { data } = req.body as ITransactionCreatedMessagePayload;
           const { id, status } = data;
@@ -45,6 +34,15 @@ export class WebhookController {
           const { id, status } = data;
           await patchTransactionAmountUsd(data, this.clients.cmc);
           await handleTransactionStatusUpdated(id, status, data);
+          return res.status(200).send("ok");
+        }
+
+        case "NCW_CREATED":
+        case "NCW_ACCOUNT_CREATED":
+        case "NCW_ASSET_CREATED":
+        case "NCW_STATUS_UPDATED":
+        case "NCW_ADD_DEVICE_SETUP_REQUESTED": {
+          await handleWalletEventMessage(type, req.body);
           return res.status(200).send("ok");
         }
 
