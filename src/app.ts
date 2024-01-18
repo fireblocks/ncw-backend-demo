@@ -76,7 +76,6 @@ function createApp(
     const { verify, key } = authOpts;
 
     try {
-      console.log("connected", token);
       if (!token) {
         throw new Error("no token provided");
       }
