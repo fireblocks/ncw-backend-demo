@@ -11,6 +11,7 @@ import { AuthOptions } from "./middleware/jwt";
 import { createRemoteJWKSet } from "jose";
 import { Issuer } from "openid-client";
 
+// use keepalive agent to reuse connections to Fireblocks API
 const keepaliveAgent = new HttpsAgent({
   keepAlive: true,
   maxSockets: 100,
@@ -77,29 +78,7 @@ AppDataSource.initialize()
   .then(async () => {
     console.log("Data Source has been initialized!");
 
-    let authOptions: AuthOptions;
-
-    if (issuerBaseURL) {
-      const issuerClient = await Issuer.discover(issuerBaseURL);
-      authOptions = {
-        key: createRemoteJWKSet(new URL(issuerClient.metadata.jwks_uri!)),
-        verify: {
-          issuer: issuerClient.metadata.issuer,
-          audience,
-        },
-      };
-    } else if (jwksUri) {
-      authOptions = {
-        key: createRemoteJWKSet(new URL(jwksUri)),
-        verify: {
-          issuer,
-          audience,
-        },
-      };
-    } else {
-      throw new Error("Failed to resolve issuer");
-    }
-
+    const authOptions: AuthOptions = await createAuthOptions();
     const { app, io } = createApp(
       authOptions,
       clients,
@@ -129,3 +108,29 @@ AppDataSource.initialize()
     console.error("Error during Data Source initialization", err);
     process.exit(1);
   });
+
+async function createAuthOptions() {
+  let authOptions: AuthOptions;
+
+  if (issuerBaseURL) {
+    const issuerClient = await Issuer.discover(issuerBaseURL);
+    authOptions = {
+      key: createRemoteJWKSet(new URL(issuerClient.metadata.jwks_uri!)),
+      verify: {
+        issuer: issuerClient.metadata.issuer,
+        audience,
+      },
+    };
+  } else if (jwksUri) {
+    authOptions = {
+      key: createRemoteJWKSet(new URL(jwksUri)),
+      verify: {
+        issuer,
+        audience,
+      },
+    };
+  } else {
+    throw new Error("Failed to resolve issuer");
+  }
+  return authOptions;
+}

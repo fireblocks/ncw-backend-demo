@@ -26,6 +26,9 @@ import { Passphrase, PassphraseLocation } from "../model/passphrase";
 import { DEFAULT_ORIGIN } from "../server";
 import { AuthOptions } from "../middleware/jwt";
 
+import ioClient from "socket.io-client";
+import io from "socket.io";
+
 const generateKeyPair = util.promisify(crypto.generateKeyPair);
 
 const sub = "user@test.com";
@@ -92,19 +95,6 @@ describe("e2e", () => {
   });
 
   beforeEach(async () => {
-    const a = createApp(
-      opts,
-      {
-        admin: instance(fireblocksSdk),
-        signer: instance(fireblocksSdk),
-        cmc: instance(cmc),
-      },
-      publicKey,
-      DEFAULT_ORIGIN,
-    );
-
-    app = a.app;
-
     const conn = await createConnection({
       type: "better-sqlite3",
       database: ":memory:",
@@ -115,6 +105,20 @@ describe("e2e", () => {
       logging: false,
     });
     await conn.synchronize();
+
+    const container = createApp(
+      opts,
+      {
+        admin: instance(fireblocksSdk),
+        signer: instance(fireblocksSdk),
+        cmc: instance(cmc),
+      },
+      publicKey,
+      DEFAULT_ORIGIN,
+    );
+
+    app = container.app;
+    ioServer = container.io;
   });
 
   afterEach(() => {
@@ -123,6 +127,7 @@ describe("e2e", () => {
   });
 
   let app: express.Express;
+  let ioServer: io.Server;
 
   async function createUser() {
     await request(app)
@@ -648,6 +653,59 @@ describe("e2e", () => {
       deviceId,
       location,
       createdAt: 0,
+    });
+  });
+
+  describe("socketio", () => {
+    const port = 12312;
+
+    beforeAll(() => {
+      ioServer.listen(port);
+    });
+
+    afterAll(async () => {
+      await new Promise((res) => ioServer.close(res));
+    });
+
+    test("authenticated socket rpc", async () => {
+      await createUser();
+      await createWallet();
+
+      const client = ioClient(`http://localhost:${port}`, {
+        autoConnect: false,
+        auth: (cb) => cb({ token: signJwt({ sub }) }),
+      });
+
+      const connected = new Promise<void>((res) => client.once("connect", res));
+      client.connect();
+      await connected;
+
+      const payload = JSON.stringify({ foo: "bar" });
+
+      when(ncw.invokeWalletRpc(walletId, deviceId, payload)).thenResolve({
+        result: "ok",
+      });
+
+      const resp = await client.emitWithAck("rpc", deviceId, payload);
+      expect(resp).toEqual({ result: "ok" });
+    });
+
+    test("unauthenticated socket rpc should be disconnected", async () => {
+      await createUser();
+      await createWallet();
+
+      const client = ioClient(`http://localhost:${port}`, {
+        autoConnect: false,
+      });
+
+      const connected = new Promise<void>((res) => client.once("connect", res));
+      const disconnected = new Promise((res) =>
+        client.once("disconnect", (reason) => res(reason)),
+      );
+
+      client.connect();
+      await connected;
+      expect(await disconnected).toEqual("io server disconnect");
     });
   });
 });
