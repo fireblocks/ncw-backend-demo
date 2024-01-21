@@ -16,8 +16,8 @@ const keepaliveAgent = new HttpsAgent({
   keepAlive: true,
   maxSockets: 100,
   maxFreeSockets: 10,
-  timeout: 60000, // active socket keepalive for 60 seconds
-  freeSocketTimeout: 30000, // free socket keepalive for 30 seconds
+  timeout: 60_000, // active socket keepalive for 60 seconds
+  freeSocketTimeout: 30_000, // free socket keepalive for 30 seconds
 });
 
 dotenv.config();
@@ -79,7 +79,7 @@ AppDataSource.initialize()
     console.log("Data Source has been initialized!");
 
     const authOptions: AuthOptions = await createAuthOptions();
-    const { app, io } = createApp(
+    const { app, socketIO } = createApp(
       authOptions,
       clients,
       webhookPublicKey,
@@ -97,7 +97,7 @@ AppDataSource.initialize()
     // set higher keepalive timeout (default: 5s)
     server.keepAliveTimeout = 60_000;
 
-    io.attach(server, {
+    socketIO.attach(server, {
       cors: {
         origin,
         methods: ["GET", "POST"],

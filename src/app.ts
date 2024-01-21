@@ -26,7 +26,7 @@ function createApp(
   clients: Clients,
   webhookPublicKey: string,
   origin: string[],
-): { app: express.Express; socketIO: Server } {
+): { app: express.Express; socketIO: SocketIOServer } {
   const validateUser = checkJwt(authOpts);
   const walletRoute = createWalletRoute(clients);
   const { route: deviceRoute, service: deviceService } =
@@ -58,9 +58,9 @@ function createApp(
 
   app.use(errorHandler);
 
-  const io = new Server();
+  const socketIO = new SocketIOServer();
 
-  io.on("connection", async (socket) => {
+  socketIO.on("connection", async (socket) => {
     const token = socket.handshake?.auth?.token;
     const { verify, key } = authOpts;
 
@@ -115,7 +115,7 @@ function createApp(
     );
   });
 
-  return { app, io };
+  return { app, socketIO };
 }
 
 export { createApp };

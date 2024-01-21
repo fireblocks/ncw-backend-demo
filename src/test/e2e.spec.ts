@@ -58,6 +58,8 @@ function signJwt(payload: object) {
   });
 }
 
+const port = 12312;
+
 describe("e2e", () => {
   const fireblocksSdk = mock<FireblocksSDK>();
   const ncw = mock<NcwSdk>();
@@ -118,12 +120,15 @@ describe("e2e", () => {
     );
 
     app = container.app;
-    ioServer = container.io;
+    ioServer = container.socketIO;
+    ioServer.listen(port);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await new Promise((res) => ioServer?.close(res));
+
     const conn = getConnection();
-    return conn.close();
+    await conn.close();
   });
 
   let app: express.Express;
@@ -657,16 +662,6 @@ describe("e2e", () => {
   });
 
   describe("socketio", () => {
-    const port = 12312;
-
-    beforeAll(() => {
-      ioServer.listen(port);
-    });
-
-    afterAll(async () => {
-      await new Promise((res) => ioServer.close(res));
-    });
-
     test("authenticated socket rpc", async () => {
       await createUser();
       await createWallet();
