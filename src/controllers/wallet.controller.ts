@@ -1,11 +1,10 @@
-import { NextFunction, Response } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { Request, NextFunction, Response } from "express";
 import { WalletService } from "../services/wallet.service";
 
 export class WalletController {
   constructor(private readonly service: WalletService) {}
 
-  async findAll(req: RequestEx, res: Response, next: NextFunction) {
+  async findAll(req: Request, res: Response, next: NextFunction) {
     const { auth } = req;
     const { sub } = auth!.payload;
 
@@ -21,7 +20,7 @@ export class WalletController {
     }
   }
 
-  async getLatestBackup(req: RequestEx, res: Response, next: NextFunction) {
+  async getLatestBackup(req: Request, res: Response, next: NextFunction) {
     const { wallet } = req;
 
     try {

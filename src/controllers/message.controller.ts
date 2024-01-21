@@ -1,9 +1,8 @@
-import { NextFunction, Response } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { Request, NextFunction, Response } from "express";
 import { getMessages, deleteMessage } from "../services/message.service";
 
 export class MessageController {
-  async findMany(req: RequestEx, res: Response, next: NextFunction) {
+  async findMany(req: Request, res: Response, next: NextFunction) {
     const physicalDeviceId = req.query.physicalDeviceId;
     const timeout = Number(req.query.timeout ?? 10);
     const batchSize = Number(req.query.batchSize ?? 10);
@@ -38,7 +37,7 @@ export class MessageController {
     }
   }
 
-  async deleteOne(req: RequestEx, res: Response, next: NextFunction) {
+  async deleteOne(req: Request, res: Response, next: NextFunction) {
     const { auth, params, device } = req;
     const { messageId } = params;
 

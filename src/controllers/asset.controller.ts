@@ -1,12 +1,11 @@
-import { NextFunction, Response } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { NextFunction, Response, Request } from "express";
 import { AssetService } from "../services/asset.service";
 import { NCW } from "fireblocks-sdk";
 
 export class AssetController {
   constructor(private readonly service: AssetService) {}
 
-  async summary(req: RequestEx, res: Response, next: NextFunction) {
+  async summary(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId } = params;
 
@@ -19,7 +18,7 @@ export class AssetController {
     }
   }
 
-  async getSupportedAssets(req: RequestEx, res: Response, next: NextFunction) {
+  async getSupportedAssets(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId } = params;
 
@@ -45,7 +44,7 @@ export class AssetController {
     }
   }
 
-  async findAll(req: RequestEx, res: Response, next: NextFunction) {
+  async findAll(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId } = params;
 
@@ -58,7 +57,7 @@ export class AssetController {
     }
   }
 
-  async findOne(req: RequestEx, res: Response, next: NextFunction) {
+  async findOne(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId, assetId } = params;
 
@@ -75,7 +74,7 @@ export class AssetController {
     }
   }
 
-  async addAsset(req: RequestEx, res: Response, next: NextFunction) {
+  async addAsset(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId, assetId } = params;
 
@@ -92,7 +91,7 @@ export class AssetController {
     }
   }
 
-  async getBalance(req: RequestEx, res: Response, next: NextFunction) {
+  async getBalance(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId, assetId } = params;
 
@@ -109,7 +108,7 @@ export class AssetController {
     }
   }
 
-  async getAddress(req: RequestEx, res: Response, next: NextFunction) {
+  async getAddress(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { accountId, assetId } = params;
 

@@ -1,9 +1,8 @@
-import { Handler, Response, NextFunction } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { Request, Handler, Response, NextFunction } from "express";
 import { Device } from "../model/device";
 
 export const validateDevice: Handler = async function (
-  req: RequestEx,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) {
