@@ -13,7 +13,6 @@ import { createPassphraseRoute } from "./routes/passphrase.route";
 import { createWalletRoute } from "./routes/wallet.route";
 import { Server } from "socket.io";
 import { Device } from "./model/device";
-import serverTiming from "server-timing";
 import { jwtVerify } from "jose";
 import { RpcResponse } from "./interfaces/RpcResponse";
 
@@ -47,25 +46,15 @@ function createApp(
     }),
   );
 
-  app.use(serverTiming());
-
   app.use(bodyParser.json({ limit: "50mb" }));
 
   app.get("/", (req: Request, res: Response) => res.send("OK"));
 
-  app.use((_req, res, next) => {
-    res.startTime("api", "api request");
-    next();
-  });
   app.post("/api/login", validateUser, userContoller.login.bind(userContoller));
   app.use("/api/passphrase", validateUser, passphraseRoute);
   app.use("/api/devices", validateUser, deviceRoute);
   app.use("/api/wallets", validateUser, walletRoute);
   app.use("/api/webhook", webhookRoute);
-  app.use((_req, res, next) => {
-    res.endTime("api");
-    next();
-  });
 
   app.use(errorHandler);
 
