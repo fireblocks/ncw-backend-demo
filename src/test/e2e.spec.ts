@@ -7,14 +7,12 @@ import { createApp } from "../app";
 import { createConnection, getConnection } from "typeorm";
 
 import { Device } from "../model/device";
-import { Message } from "../model/message";
 import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
 import { FireblocksSDK, NCW, TransactionStatus } from "fireblocks-sdk";
 import { anyString, anything, instance, mock, when } from "ts-mockito";
 import { AuthOptions } from "express-oauth2-jwt-bearer";
 import { sign, Algorithm } from "jsonwebtoken";
-import { MessageSubscriber } from "../subscribers/message.subscriber";
 import { Transaction } from "../model/transaction";
 import { TransactionSubscriber } from "../subscribers/transaction.subscriber";
 import { CryptoClient } from "coinmarketcap-js";
@@ -99,8 +97,8 @@ describe("e2e", () => {
       type: "better-sqlite3",
       database: ":memory:",
       dropSchema: true,
-      subscribers: [MessageSubscriber, TransactionSubscriber],
-      entities: [Wallet, Device, Message, User, Transaction, Passphrase],
+      subscribers: [TransactionSubscriber],
+      entities: [Wallet, Device, User, Transaction, Passphrase],
       synchronize: true,
       logging: false,
     });
@@ -277,19 +275,6 @@ describe("e2e", () => {
       .expect(200);
   }
 
-  async function webhookMessage(message = "foo") {
-    const payload = {
-      type: "NCW_DEVICE_MESSAGE",
-      timestamp: Date().valueOf(),
-      walletId,
-      deviceId,
-      data: {
-        message,
-      },
-    };
-    await webhookPush(payload);
-  }
-
   async function webhookTransaction(
     txId = randomUUID(),
     type = "TRANSACTION_CREATED",
@@ -414,7 +399,6 @@ describe("e2e", () => {
   it("should handle msgs", async () => {
     await createUser();
     await createWallet();
-    await webhookMessage();
 
     const { body } = await getMessages();
     expect(body).toHaveLength(1);
@@ -435,7 +419,6 @@ describe("e2e", () => {
     await createWallet();
 
     const msgProm = getMessages(20);
-    await webhookMessage();
     await msgProm;
   });
 

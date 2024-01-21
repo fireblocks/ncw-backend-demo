@@ -5,11 +5,9 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   PrimaryColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { Message } from "./message";
 import { User } from "./user";
 import { Wallet } from "./wallet";
 
@@ -23,9 +21,6 @@ export class Device extends BaseEntity {
 
   @Column({ type: "uuid", nullable: false, length: 64 })
   walletId: string;
-
-  @OneToMany(() => Message, (msg) => msg.device)
-  msgs: Message[];
 
   @ManyToOne(() => Wallet, (wallet) => wallet.devices, { cascade: true })
   @JoinColumn({ name: "walletId", referencedColumnName: "id" })

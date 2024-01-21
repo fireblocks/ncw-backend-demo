@@ -1,8 +1,6 @@
-import { Device } from "../model/device";
 import { PeerType, TransactionStatus } from "fireblocks-sdk";
 import { In } from "typeorm";
 import { ITransactionDetails } from "../interfaces/transaction";
-import { Message } from "../model/message";
 import { Wallet } from "../model/wallet";
 import { Transaction } from "../model/transaction";
 
@@ -54,32 +52,6 @@ export async function handleTransactionCreated(
   }
 
   await tx.save();
-}
-
-export async function handleNcwDeviceMessage(
-  deviceId: string,
-  walletId: string,
-  physicalDeviceId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any,
-) {
-  const device = await Device.findOne({
-    where: {
-      id: deviceId,
-      walletId,
-    },
-  });
-
-  if (!device) {
-    console.warn("ignoring NCW Device message for unknown deviceId", deviceId);
-    return;
-  }
-
-  const msg = new Message();
-  msg.device = device;
-  msg.physicalDeviceId = physicalDeviceId;
-  msg.message = JSON.stringify(data);
-  await msg.save();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

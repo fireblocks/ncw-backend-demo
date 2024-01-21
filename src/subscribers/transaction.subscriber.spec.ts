@@ -1,6 +1,5 @@
 import { createConnection, getConnection } from "typeorm";
 import { Device } from "../model/device";
-import { Message } from "../model/message";
 import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
 import { Transaction } from "../model/transaction";
@@ -26,7 +25,7 @@ describe("transaction subscriber", () => {
       database: ":memory:",
       dropSchema: true,
       subscribers: [TransactionSubscriber],
-      entities: [Wallet, Device, Message, User, Transaction, Passphrase],
+      entities: [Wallet, Device, User, Transaction, Passphrase],
       synchronize: true,
       logging: false,
     });

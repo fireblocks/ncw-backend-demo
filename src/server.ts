@@ -3,9 +3,7 @@ import { FireblocksSDK } from "fireblocks-sdk";
 import dotenv from "dotenv";
 import { AppDataSource } from "./data-source";
 import CoinMarketcap from "coinmarketcap-js";
-import ms from "ms";
 
-import { staleMessageCleanup } from "./services/message.service";
 import { getEnvOrThrow } from "./util/env";
 
 dotenv.config();
@@ -53,11 +51,6 @@ AppDataSource.initialize()
 
     app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
-
-      // should be distributed scheduled task in production
-      setInterval(() => {
-        void staleMessageCleanup();
-      }, ms("1 hour"));
     });
   })
   .catch((err) => {
