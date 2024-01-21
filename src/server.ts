@@ -72,7 +72,6 @@ const clients = {
 };
 
 const origin = getOriginFromEnv();
-// TODO: need to fetch issuerBaseURL /.well-known?
 
 AppDataSource.initialize()
   .then(async () => {
