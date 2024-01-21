@@ -11,7 +11,7 @@ import { Clients } from "./interfaces/Clients";
 import { errorHandler } from "./middleware/errorHandler";
 import { createPassphraseRoute } from "./routes/passphrase.route";
 import { createWalletRoute } from "./routes/wallet.route";
-import { Server } from "socket.io";
+import { Server as SocketIOServer } from "socket.io";
 import { Device } from "./model/device";
 import { jwtVerify } from "jose";
 import { RpcResponse } from "./interfaces/RpcResponse";
@@ -26,7 +26,7 @@ function createApp(
   clients: Clients,
   webhookPublicKey: string,
   origin: string[],
-): { app: express.Express; io: Server } {
+): { app: express.Express; socketIO: Server } {
   const validateUser = checkJwt(authOpts);
   const walletRoute = createWalletRoute(clients);
   const { route: deviceRoute, service: deviceService } =
