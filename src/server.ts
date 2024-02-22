@@ -1,7 +1,7 @@
 import { createApp } from "./app";
 import { FireblocksSDK } from "fireblocks-sdk";
 import dotenv from "dotenv";
-import { AppDataSource } from "./data-source";
+import { appDataSource } from "./data-source";
 import CoinMarketcap from "coinmarketcap-js";
 import ms from "ms";
 import { staleMessageCleanup } from "./services/message.service";
@@ -73,8 +73,36 @@ const clients = {
 
 const origin = getOriginFromEnv();
 
-AppDataSource.initialize()
-  .then(async () => {
+async function createAuthOptions() {
+  let authOptions: AuthOptions;
+
+  if (issuerBaseURL) {
+    const issuerClient = await Issuer.discover(issuerBaseURL);
+    authOptions = {
+      key: createRemoteJWKSet(new URL(issuerClient.metadata.jwks_uri!)),
+      verify: {
+        issuer: issuerClient.metadata.issuer,
+        audience,
+      },
+    };
+  } else if (jwksUri) {
+    authOptions = {
+      key: createRemoteJWKSet(new URL(jwksUri)),
+      verify: {
+        issuer,
+        audience,
+      },
+    };
+  } else {
+    throw new Error("Failed to resolve issuer");
+  }
+  return authOptions;
+}
+
+async function init() {
+  try {
+    await appDataSource.initialize();
+
     console.log("Data Source has been initialized!");
 
     const authOptions: AuthOptions = await createAuthOptions();
@@ -102,34 +130,10 @@ AppDataSource.initialize()
         methods: ["GET", "POST"],
       },
     });
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error("Error during Data Source initialization", err);
     process.exit(1);
-  });
-
-async function createAuthOptions() {
-  let authOptions: AuthOptions;
-
-  if (issuerBaseURL) {
-    const issuerClient = await Issuer.discover(issuerBaseURL);
-    authOptions = {
-      key: createRemoteJWKSet(new URL(issuerClient.metadata.jwks_uri!)),
-      verify: {
-        issuer: issuerClient.metadata.issuer,
-        audience,
-      },
-    };
-  } else if (jwksUri) {
-    authOptions = {
-      key: createRemoteJWKSet(new URL(jwksUri)),
-      verify: {
-        issuer,
-        audience,
-      },
-    };
-  } else {
-    throw new Error("Failed to resolve issuer");
   }
-  return authOptions;
 }
+
+export { init };
