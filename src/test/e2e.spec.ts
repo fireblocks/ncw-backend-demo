@@ -23,7 +23,7 @@ import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
 import { TAssetSummary } from "../services/asset.service";
 import { mockInfoResponse } from "./mockInfoResponse";
 import { Passphrase, PassphraseLocation } from "../model/passphrase";
-import { DEFAULT_ORIGIN } from "../server";
+import { DEFAULT_ORIGIN, init } from "../server";
 import { AuthOptions } from "../middleware/jwt";
 
 import ioClient from "socket.io-client";
@@ -80,6 +80,8 @@ describe("e2e", () => {
   let publicKey: string, privateKey: string;
 
   beforeAll(async () => {
+    await init();
+
     const pair = await generateKeyPair("rsa", {
       modulusLength: 1024,
       publicKeyEncoding: {
@@ -156,7 +158,7 @@ describe("e2e", () => {
 
   async function getDevices() {
     return await request(app)
-      .get(`/api/devices/`)
+      .get("/api/devices/")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -191,7 +193,7 @@ describe("e2e", () => {
 
   async function getPassphrases() {
     return await request(app)
-      .get(`/api/passphrase/`)
+      .get("/api/passphrase/")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -272,7 +274,7 @@ describe("e2e", () => {
 
   async function getWallets() {
     return await request(app)
-      .get(`/api/wallets/`)
+      .get("/api/wallets/")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -291,7 +293,7 @@ describe("e2e", () => {
     const signature = signer.sign(privateKey, "base64");
 
     return await request(app)
-      .post(`/api/webhook`)
+      .post("/api/webhook")
       .send(payload)
       .set("fireblocks-signature", signature)
       .expect(200);
