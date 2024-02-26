@@ -12,7 +12,6 @@
   "plugins": ["@typescript-eslint"],
   "rules": {
     "require-await": ["error"],
-    "quotes": ["error", "double"],
     "semi": ["error", "always"],
     "no-multi-spaces": ["error"]
   }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { JWTVerifyOptions, JWTVerifyGetKey, jwtVerify } from "jose";
+
 export interface AuthOptions {
   verify: JWTVerifyOptions;
   key: JWTVerifyGetKey;

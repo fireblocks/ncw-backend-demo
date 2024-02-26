@@ -4,11 +4,12 @@ import { TransactionStatus } from "fireblocks-sdk";
 export const transactionMock = (
     txId = randomUUID(),
     status = TransactionStatus.CONFIRMING,
-    walletId = "123"
+    walletId = "123",
+    date = Date.now()
 ) => ({
     id: txId,
-    createdAt: new Date().valueOf(),
-    lastUpdated: new Date().valueOf(),
+    createdAt: date,
+    lastUpdated: date,
     assetId: "BTC_TEST",
     source: {
         id: "0",
