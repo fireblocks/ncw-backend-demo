@@ -15,6 +15,13 @@ export async function handleTransactionStatusUpdated(
     where: { id },
     relations: { wallets: true },
   });
+
+  // Ensure consistency
+  if (tx.lastUpdated >= new Date(data.lastUpdated)) {
+    console.warn(`Transaction id ${id}: DB version is updated already. Skipping update`);
+    return;
+  }
+
   tx.status = status;
   tx.details = data;
   tx.lastUpdated = new Date(data.lastUpdated);
@@ -51,6 +58,13 @@ export async function handleTransactionCreated(
     });
   } else {
     tx.wallets = [];
+  }
+
+  // Ensure consistency
+  const existingTx = await Transaction.findOne({ where: { id } });
+  if (existingTx) {
+    console.warn(`Transaction with id ${id} already exists. Skipping create`);
+    return;
   }
 
   await tx.save();
