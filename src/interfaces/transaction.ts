@@ -129,13 +129,13 @@ export interface NetworkRecord {
 }
 
 export interface DestinationsResponse {
-  amount: string; //	The amount to be sent to this destination.
-  destination: TransferPeerPathResponse; //	Destination of the transaction.
-  amountUSD: number; //	The USD value of the requested amount.
-  destinationAddress: string; //	Address where the asset were transferred.
-  destinationAddressDescription: string; //	Description of the address.
-  amlScreeningResult: AmlScreeningResult; //	The result of the AML screening.
-  customerRefId: string; // The ID for AML providers to associate the owner of funds with transactions.
+  amount?: string; //	The amount to be sent to this destination.
+  destination?: TransferPeerPathResponse; //	Destination of the transaction.
+  amountUSD?: number; //	The USD value of the requested amount.
+  destinationAddress?: string; //	Address where the asset were transferred.
+  destinationAddressDescription?: string; //	Description of the address.
+  amlScreeningResult?: AmlScreeningResult; //	The result of the AML screening.
+  customerRefId?: string; // The ID for AML providers to associate the owner of funds with transactions.
 }
 
 export interface RewardsInfo {
@@ -157,23 +157,23 @@ export interface ITransactionDetails {
   source: TransferPeerPathResponse; //	Source of the transaction.
   destination: TransferPeerPathResponse; //	Fireblocks supports multiple destinations for UTXO-based blockchains. For other blockchains, this array will always be composed of one element.
   requestedAmount: number; //	The amount requested by the user.
-  amountInfo: AmountInfo; //	Details of the transaction's amount in string format.
-  feeInfo: FeeInfo; //	Details of the transaction's fee in string format.
+  amountInfo?: AmountInfo; //	Details of the transaction's amount in string format.
+  feeInfo?: FeeInfo; //	Details of the transaction's fee in string format.
   amount: number; //	If the transfer is a withdrawal from an exchange, the actual amount that was requested to be transferred. Otherwise, the requested amount.
   netAmount: number; //	The net amount of the transaction, after fee deduction.
   amountUSD: number; //	The USD value of the requested amount.
-  serviceFee: number; //	The total fee deducted by the exchange from the actual requested amount (serviceFee = amount - netAmount).
-  treatAsGrossAmount: boolean; //	For outgoing transactions, if true, the network fee is deducted from the requested amount.
+  serviceFee?: number; //	The total fee deducted by the exchange from the actual requested amount (serviceFee = amount - netAmount).
+  treatAsGrossAmount?: boolean; //	For outgoing transactions, if true, the network fee is deducted from the requested amount.
   networkFee: number; //	The fee paid to the network.
   createdAt: number; //	Unix timestamp.
   lastUpdated: number; //	Unix timestamp.
   status: TransactionStatus; //		The current status of the transaction.
   txHash: string; //	Blockchain hash of the transaction.
-  index: number; //[optional] For UTXO based assets this is the vOut, for Ethereum based, this is the index of the event of the contract call.
+  index?: number; //[optional] For UTXO based assets this is the vOut, for Ethereum based, this is the index of the event of the contract call.
   subStatus: TransactionSubStatus; //		More detailed status of the transaction.
-  sourceAddress: string; //For account based assets only, the source address of the transaction. (Note: This parameter will be empty for transactions that are not: CONFIRMING, COMPLETED, or REJECTED/FAILED after passing CONFIRMING status.)
+  sourceAddress?: string; //For account based assets only, the source address of the transaction. (Note: This parameter will be empty for transactions that are not: CONFIRMING, COMPLETED, or REJECTED/FAILED after passing CONFIRMING status.)
   destinationAddress: string; //Address where the asset were transferred.
-  destinationAddressDescription: string; //Description of the address.
+  destinationAddressDescription?: string; //Description of the address.
   destinationTag: string; //Destination tag for XRP, used as memo for EOS/XLM, or Bank Transfer Description for the fiat providers: Signet (by Signature), SEN (by Silvergate), or BLINC (by BCB Group).
   signedBy: string[]; // Signers of the transaction.
   createdBy: string; //Initiator of the transaction.
@@ -182,20 +182,20 @@ export interface ITransactionDetails {
   note: string; //Custom note of the transaction.
   exchangeTxId: string; //If the transaction originated from an exchange, this is the exchange tx ID.
   feeCurrency: string; //The asset which was taken to pay the fee (ETH for ERC-20 tokens, BTC for Tether Omni).
-  operation: TransactionOperation; //	Default operation is "TRANSFER".
-  amlScreeningResult: AmlScreeningResult; //		The result of the AML screening.
-  customerRefId: string; //The ID for AML providers to associate the owner of funds with transactions.
-  numOfConfirmations: number; //The number of confirmations of the transaction. The number will increase until the transaction will be considered completed according to the confirmation policy.
-  networkRecords: NetworkRecord[]; // Transaction on the Fireblocks platform can aggregate several blockchain transactions, in such a case these records specify all the transactions that took place on the blockchain.
-  replacedTxHash: string; //In case of an RBF transaction, the hash of the dropped transaction.
-  externalTxId: string; //Unique transaction ID provided by the user.
-  destinations: DestinationsResponse[]; //	For UTXO based assets, all outputs specified here.
-  blockInfo: BlockInfo; //		The information of the block that this transaction was mined in, the blocks's hash and height.
-  rewardsInfo: RewardsInfo; //	This field is relevant only for ALGO transactions.Both srcRewrds and destRewards will appear only for Vault to Vault transactions, otherwise you will receive only the Fireblocks' side of the transaction.
-  authorizationInfo: AuthorizationInfo; //	The information about your Transaction Authorization Policy(TAP).For more information about the TAP, refer to this section in the Help Center.
+  operation?: TransactionOperation; //	Default operation is "TRANSFER".
+  amlScreeningResult?: AmlScreeningResult; //		The result of the AML screening.
+  customerRefId?: string; //The ID for AML providers to associate the owner of funds with transactions.
+  numOfConfirmations?: number; //The number of confirmations of the transaction. The number will increase until the transaction will be considered completed according to the confirmation policy.
+  networkRecords?: NetworkRecord[]; // Transaction on the Fireblocks platform can aggregate several blockchain transactions, in such a case these records specify all the transactions that took place on the blockchain.
+  replacedTxHash?: string; //In case of an RBF transaction, the hash of the dropped transaction.
+  externalTxId?: string; //Unique transaction ID provided by the user.
+  destinations?: DestinationsResponse[]; //	For UTXO based assets, all outputs specified here.
+  blockInfo?: BlockInfo; //		The information of the block that this transaction was mined in, the blocks's hash and height.
+  rewardsInfo?: RewardsInfo; //	This field is relevant only for ALGO transactions.Both srcRewrds and destRewards will appear only for Vault to Vault transactions, otherwise you will receive only the Fireblocks' side of the transaction.
+  authorizationInfo?: AuthorizationInfo; //	The information about your Transaction Authorization Policy(TAP).For more information about the TAP, refer to this section in the Help Center.
   signedMessages: SignedMessage[]; //	A list of signed messages returned for raw signing.
-  extraParameters: object; // JSON object	Protocol / operation specific parameters.
-  systemMessages: ISystemMessageInfo[]; // objects	A response from Fireblocks that communicates a message about the health of the process being performed. If this object is returned with data, you should expect potential delays or incomplete transaction statuses.
+  extraParameters?: object; // JSON object	Protocol / operation specific parameters.
+  systemMessages?: ISystemMessageInfo[]; // objects	A response from Fireblocks that communicates a message about the health of the process being performed. If this object is returned with data, you should expect potential delays or incomplete transaction statuses.
 }
 
 export interface ITransactionCreatedMessagePayload {

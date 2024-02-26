@@ -15,17 +15,20 @@ import { Server as SocketIOServer } from "socket.io";
 import { Device } from "./model/device";
 import { jwtVerify } from "jose";
 import { RpcResponse } from "./interfaces/RpcResponse";
+import { PollingService } from "./services/polling.service";
 
 const logger = morgan("combined");
 
-export const visibilityTimeout = 120_000;
-export const waitForTransactionTimeout = 10_000;
+const visibilityTimeout = 120_000;
+const waitForTransactionTimeout = 10_000;
+let pollingService: PollingService;
 
 function createApp(
   authOpts: AuthOptions,
   clients: Clients,
   webhookPublicKey: string,
   origin: string[],
+  pollingEnabled: boolean,
 ): { app: express.Express; socketIO: SocketIOServer } {
   const validateUser = checkJwt(authOpts);
   const walletRoute = createWalletRoute(clients);
@@ -34,6 +37,13 @@ function createApp(
   const passphraseRoute = createPassphraseRoute();
   const webhookRoute = createWebhook(clients, webhookPublicKey);
   const userContoller = new UserController(new UserService());
+
+  pollingService?.stop();
+  pollingService = new PollingService(clients);
+  console.log(`Polling enabled: ${pollingEnabled}`);
+  if (pollingEnabled) {
+    pollingService.start();
+  }
 
   const app: Express = express();
 
@@ -118,4 +128,9 @@ function createApp(
   return { app, socketIO };
 }
 
-export { createApp };
+export {
+  createApp,
+  visibilityTimeout,
+  waitForTransactionTimeout,
+  pollingService,
+};
