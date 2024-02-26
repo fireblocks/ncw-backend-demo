@@ -27,8 +27,12 @@ const groupBy = <T, K extends keyof never>(arr: T[], key: (i: T) => K) =>
 
 export class PollingService {
   private active: boolean;
-  private pollingIntervalMs: number;
-  private readonly completedStatuses: TransactionStatus[] = [
+  private readonly pollingIntervalMs: number = 60_000;
+  private readonly pollingShortIntervalMs: number = 10_000;
+  private currentPollingIntervalMs: number;
+  private incomingTxTimer: NodeJS.Timeout;
+
+  static readonly FINAL_STATUSES: TransactionStatus[] = [
     TransactionStatus.COMPLETED,
     TransactionStatus.CANCELLED,
     TransactionStatus.REJECTED,
@@ -38,7 +42,7 @@ export class PollingService {
 
   constructor(private readonly clients: Clients) {
     this.active = false;
-    this.pollingIntervalMs = 60000;
+    this.currentPollingIntervalMs = this.pollingIntervalMs;
   }
 
   private async getDbRecentTransactionsSorted(
@@ -62,7 +66,7 @@ export class PollingService {
   }
 
   private isCompletedTx(tx: { status: TransactionStatus }) {
-    return this.completedStatuses.includes(tx.status);
+    return PollingService.FINAL_STATUSES.includes(tx.status);
   }
 
   private txResponseToTxDetails(tr: TransactionResponse): ITransactionDetails {
@@ -73,9 +77,6 @@ export class PollingService {
       destinations: tr.destinations?.map((dest) => ({
         ...dest,
         amountUSD: Number(dest.amountUSD),
-        // TODO: should we fill 'destinationAddress' although:
-        // 1. dest.destination.address is not publicly available in Fireblocks API
-        // 2. dest.destination.address only has value when the destination is a blockchain address
       })),
       signedMessages: tr.signedMessages!,
     };
@@ -100,6 +101,30 @@ export class PollingService {
     }
   }
 
+  /**
+   * Increases the current polling frequency for a short period of time
+   */
+  private increasePollingFrequency() {
+    console.log(
+      "PollingService: increasePollingFrequency - increase frequency",
+    );
+    this.currentPollingIntervalMs = this.pollingShortIntervalMs;
+
+    if (this.incomingTxTimer) {
+      clearTimeout(this.incomingTxTimer);
+    }
+
+    this.incomingTxTimer = setTimeout(() => {
+      console.log(
+        "PollingService: increasePollingFrequency - reset back to normal",
+      );
+      this.currentPollingIntervalMs = this.pollingIntervalMs;
+    }, 120_000);
+  }
+
+  /**
+   * Polls for recent transactions from FB BE and updates their status in DB.
+   */
   async pollAndUpdate() {
     try {
       // Get recent transactions from DB (ignore transactions that were not updated for more than 48 hours):
@@ -131,6 +156,7 @@ export class PollingService {
           if (!dbRecentTxsById[tx.id]) {
             // Tx doesn't exist in DB yet
             await handleTransactionCreated(id, status, tx);
+            this.increasePollingFrequency();
           } else if (
             new Date(tx.lastUpdated) > dbRecentTxsById[tx.id][0].lastUpdated
           ) {
@@ -152,10 +178,14 @@ export class PollingService {
   async start() {
     console.log("PollingService: start");
     this.active = true;
+
+    // perform full sync first
     await this.pollAndUpdateAll();
+    await sleep(this.currentPollingIntervalMs);
+
     while (this.active) {
       await this.pollAndUpdate();
-      await sleep(this.pollingIntervalMs);
+      await sleep(this.currentPollingIntervalMs);
     }
   }
 
