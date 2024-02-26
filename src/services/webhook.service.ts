@@ -6,6 +6,18 @@ import { Message } from "../model/message";
 import { Wallet } from "../model/wallet";
 import { Transaction } from "../model/transaction";
 
+export async function handleTransactionCreatedOrUpdated(
+  id: string,
+  status: TransactionStatus,
+  data: ITransactionDetails,
+) {
+  try {
+    return await handleTransactionStatusUpdated(id, status, data);
+  } catch (error) {
+    return await handleTransactionCreated(id, status, data);
+  }
+}
+
 export async function handleTransactionStatusUpdated(
   id: string,
   status: TransactionStatus,
@@ -18,7 +30,7 @@ export async function handleTransactionStatusUpdated(
 
   // Ensure consistency
   if (tx.lastUpdated >= new Date(data.lastUpdated)) {
-    console.warn(`Transaction id ${id}: DB version is updated already. Skipping update`);
+    console.warn(`Transaction id ${id}: already updated. Skipping update`);
     return;
   }
 
@@ -63,7 +75,7 @@ export async function handleTransactionCreated(
   // Ensure consistency
   const existingTx = await Transaction.findOne({ where: { id } });
   if (existingTx) {
-    console.warn(`Transaction with id ${id} already exists. Skipping create`);
+    console.warn(`Transaction id ${id}: already exists. Skipping create`);
     return;
   }
 
