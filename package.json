@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --sourceMap true",
     "serve": "node dist/main.js",
     "dev": "nodemon src/main.ts",
     "migrate": "yarn run typeorm migration:run",

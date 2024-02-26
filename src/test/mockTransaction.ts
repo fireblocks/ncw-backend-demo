@@ -1,0 +1,62 @@
+import { randomUUID } from "crypto";
+import { TransactionStatus } from "fireblocks-sdk";
+
+export const transactionMock = (
+    txId = randomUUID(),
+    status = TransactionStatus.CONFIRMING,
+    walletId = "123"
+) => ({
+    id: txId,
+    createdAt: new Date().valueOf(),
+    lastUpdated: new Date().valueOf(),
+    assetId: "BTC_TEST",
+    source: {
+        id: "0",
+        type: "END_USER_WALLET",
+        walletId,
+        name: "External",
+        subType: "",
+    },
+    destination: {
+        id: "0",
+        type: "VAULT_ACCOUNT",
+        name: "Default",
+        subType: "",
+    },
+    amount: 0.00001,
+    networkFee: 0.00000141,
+    netAmount: 0.00001,
+    sourceAddress: "tb1q5c3y5g4mm2ge6zvavtvwzuc7nl9jt5knvk36sk",
+    destinationAddress: "tb1qrscwnskfaejtthnh4ds8h4wu6fcxhhgfjj2xay",
+    destinationAddressDescription: "",
+    destinationTag: "",
+    status: status,
+    txHash:
+        "0ca2e172b36359687981786114034e4c89379b23cd5137b1b6b0f9ee41d90669",
+    subStatus: "PENDING_BLOCKCHAIN_CONFIRMATIONS",
+    signedBy: [],
+    createdBy: "",
+    rejectedBy: "",
+    amountUSD: 0,
+    addressType: "",
+    note: "",
+    exchangeTxId: "",
+    requestedAmount: 0.00001,
+    feeCurrency: "BTC_TEST",
+    operation: "TRANSFER",
+    customerRefId: null,
+    numOfConfirmations: 0,
+    amountInfo: {
+        amount: "0.00001",
+        requestedAmount: "0.00001",
+        netAmount: "0.00001",
+        amountUSD: null,
+    },
+    feeInfo: { networkFee: "0.00000141" },
+    destinations: [],
+    externalTxId: null,
+    blockInfo: { blockHash: null },
+    signedMessages: [],
+    index: 1,
+    assetType: "BASE_ASSET",
+});

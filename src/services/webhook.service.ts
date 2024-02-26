@@ -41,8 +41,8 @@ export async function handleTransactionCreated(
         (d) => d.destination,
       ),
     ]
-      .filter((p) => p.type === PeerType.END_USER_WALLET)
-      .map((p) => p.walletId!),
+      .filter((p) => p?.type === PeerType.END_USER_WALLET)
+      .map((p) => p?.walletId),
   );
 
   if (wallets.size) {

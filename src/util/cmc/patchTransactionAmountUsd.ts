@@ -3,7 +3,7 @@ import { CryptoClient } from "coinmarketcap-js";
 import { getUsdRateForAsset } from "./getUsdRate";
 
 export async function patchTransactionAmountUsd(
-  data: ITransactionDetails,
+  data: Pick<ITransactionDetails, "amountUSD" | "amount" | "assetId">,
   cmc: CryptoClient,
 ) {
   // transactions of testnet assets don't have USD rates, so we patch the amount with real asset USD rates for mock

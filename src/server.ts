@@ -24,7 +24,9 @@ dotenv.config();
 
 const port = process.env.PORT;
 
-export const DEFAULT_ORIGIN = [
+const pollingEnabled = Boolean(process.env.POLLING_ENABLED);
+
+const DEFAULT_ORIGIN = [
   "http://localhost:5173",
   "https://fireblocks.github.io",
 ];
@@ -111,6 +113,7 @@ async function init() {
       clients,
       webhookPublicKey,
       origin,
+      pollingEnabled,
     );
     const server = app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
@@ -136,4 +139,4 @@ async function init() {
   }
 }
 
-export { init };
+export { init, DEFAULT_ORIGIN };
