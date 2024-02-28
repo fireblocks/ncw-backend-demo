@@ -30,7 +30,7 @@ export class PollingService {
   private readonly pollingIntervalMs: number = 60_000;
   private readonly pollingShortIntervalMs: number = 10_000;
   private currentPollingIntervalMs: number;
-  private incomingTxTimer: NodeJS.Timeout;
+  private incomingTxTimer: NodeJS.Timeout | null;
 
   static readonly FINAL_STATUSES: TransactionStatus[] = [
     TransactionStatus.COMPLETED,
@@ -112,6 +112,7 @@ export class PollingService {
 
     if (this.incomingTxTimer) {
       clearTimeout(this.incomingTxTimer);
+      this.incomingTxTimer = null;
     }
 
     this.incomingTxTimer = setTimeout(() => {
@@ -192,5 +193,9 @@ export class PollingService {
   stop() {
     console.log("PollingService: 'stop' received");
     this.active = false;
+    if (this.incomingTxTimer) {
+      clearTimeout(this.incomingTxTimer);
+      this.incomingTxTimer = null;
+    }
   }
 }
