@@ -1,13 +1,16 @@
-import { TransactionResponse, TransactionStatus } from "fireblocks-sdk";
+import {
+  TransactionPageFilter,
+  TransactionResponse,
+  TransactionStatus,
+} from "fireblocks-sdk";
 import { Clients } from "../interfaces/Clients";
 import { patchTransactionAmountUsd } from "../util/cmc/patchTransactionAmountUsd";
 import {
   handleTransactionCreated,
-  handleTransactionCreatedOrUpdated,
   handleTransactionStatusUpdated,
 } from "./webhook.service";
 import { Transaction } from "../model/transaction";
-import { MoreThan } from "typeorm";
+import { FindOptionsWhere, MoreThan } from "typeorm";
 import {
   ITransactionDetails,
   TransactionSubStatus,
@@ -57,16 +60,18 @@ class PollingService {
     return PollingService.instance;
   }
 
-  private async getDbRecentTransactionsSorted(
-    minLastUpdated: Date,
+  private async getDbTxs(
+    minLastUpdated?: Date,
   ): Promise<
     Pick<Transaction, "id" | "createdAt" | "lastUpdated" | "status">[]
   > {
+    const where: FindOptionsWhere<Transaction> = minLastUpdated
+      ? { lastUpdated: MoreThan(minLastUpdated) }
+      : {};
+
     return await Transaction.find({
       select: ["id", "createdAt", "lastUpdated", "status"],
-      where: {
-        lastUpdated: MoreThan(minLastUpdated),
-      },
+      where,
       order: { createdAt: "ASC" },
     });
   }
@@ -94,25 +99,6 @@ class PollingService {
     };
   }
 
-  private async pollAndUpdateAll() {
-    console.log("PollingService: pollAndUpdateAll");
-    try {
-      // Get transactions from Fireblocks:
-      const txsResponses: TransactionResponse[] = await fetchAllTxs(
-        (pagePath) =>
-          this.clients.admin.getTransactionsWithPageInfo({}, pagePath),
-      );
-      for (const txResponse of txsResponses) {
-        const tx = this.txResponseToTxDetails(txResponse);
-        const { id, status } = tx;
-        await patchTransactionAmountUsd(tx, this.clients.cmc);
-        await handleTransactionCreatedOrUpdated(id, status, tx);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   /**
    * Increases the current polling frequency for a short period of time
    */
@@ -136,48 +122,51 @@ class PollingService {
   }
 
   /**
-   * Polls for recent transactions from FB BE and updates their status in DB.
+   * Polls transactions from Fireblocks and updates the DB
+   * @param all - if true, will poll all transactions, otherwise will poll only recent transactions
    */
-  async pollAndUpdate() {
+  async pollAndUpdate(all: boolean = false) {
     try {
-      // Get recent transactions from DB (ignore transactions that were not updated for more than 48 hours):
-      const dbRecentTxs = await this.getDbRecentTransactionsSorted(
-        this.hoursAgoDate(48),
+      // Get transactions from DB (ignore transactions that were not updated for more than 48 hours):
+      const dbTxs = await this.getDbTxs(
+        all ? undefined : this.hoursAgoDate(48),
       );
-      // Get createdAt of earliest non-completed tx
-      const firstNonCompletedTx = dbRecentTxs.find(
-        (tx) => !this.isCompletedTx(tx),
-      );
-      const minCreatedAt: Date =
-        firstNonCompletedTx?.createdAt || this.hoursAgoDate(48);
+
+      let txPageFilter: TransactionPageFilter = {};
+      if (!all) {
+        // Get createdAt of earliest non-completed tx
+        const firstNonCompletedTx = dbTxs.find((tx) => !this.isCompletedTx(tx));
+
+        const minCreatedAt =
+          firstNonCompletedTx?.createdAt || this.hoursAgoDate(48);
+        txPageFilter = { after: minCreatedAt.getTime() - 1 };
+      }
+
       // Get transactions from Fireblocks:
       const txsResponses: TransactionResponse[] = await fetchAllTxs(
         (pagePath) =>
           this.clients.admin.getTransactionsWithPageInfo(
-            { after: minCreatedAt.getTime() - 1 },
+            txPageFilter,
             pagePath,
           ),
       );
 
-      const dbRecentTxsById = groupBy(dbRecentTxs, (tx) => tx.id);
+      const dbTxsById = groupBy(dbTxs, (tx) => tx.id);
       for (const txResponse of txsResponses) {
         const tx = this.txResponseToTxDetails(txResponse);
         const { id, status } = tx;
         await patchTransactionAmountUsd(tx, this.clients.cmc);
 
         try {
-          if (!dbRecentTxsById[tx.id]) {
+          if (!dbTxsById[tx.id]) {
             // Tx doesn't exist in DB yet
             await handleTransactionCreated(id, status, tx);
             this.increasePollingFrequency();
           } else if (
-            new Date(tx.lastUpdated) > dbRecentTxsById[tx.id][0].lastUpdated
+            new Date(tx.lastUpdated) > dbTxsById[tx.id][0].lastUpdated
           ) {
             // Tx exists in DB and it was updated in Fireblocks
             await handleTransactionStatusUpdated(id, status, tx);
-          } else {
-            // Tx exists in DB and it was not updated.
-            console.debug(`tx ${tx.id}: no change`);
           }
         } catch (error) {
           console.error(error);
@@ -193,7 +182,7 @@ class PollingService {
     this.active = true;
 
     // perform full sync first
-    await this.pollAndUpdateAll();
+    await this.pollAndUpdate(true);
     await sleep(this.currentPollingIntervalMs);
 
     while (this.active) {
