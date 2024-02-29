@@ -27,7 +27,7 @@ function createApp(
   clients: Clients,
   webhookPublicKey: string,
   origin: string[],
-  pollingEnabled: boolean,
+  enablePolling: boolean,
 ): { app: express.Express; socketIO: SocketIOServer } {
   const validateUser = checkJwt(authOpts);
   const walletRoute = createWalletRoute(clients);
@@ -38,8 +38,8 @@ function createApp(
   const userController = new UserController(new UserService());
 
   const pollingService = PollingService.createInstance(clients);
-  console.log(`Polling enabled: ${pollingEnabled}`);
-  if (pollingEnabled) {
+  console.log(`Polling ${enablePolling ? "enabled" : "disabled"}`);
+  if (enablePolling) {
     pollingService.start();
   }
 

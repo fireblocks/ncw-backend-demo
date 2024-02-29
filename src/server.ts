@@ -24,7 +24,7 @@ dotenv.config();
 
 const port = process.env.PORT;
 
-const pollingEnabled = Boolean(process.env.POLLING_ENABLED);
+const enablePolling = Boolean(process.env.ENABLE_POLLING);
 
 const DEFAULT_ORIGIN = [
   "http://localhost:5173",
@@ -113,7 +113,7 @@ async function init() {
       clients,
       webhookPublicKey,
       origin,
-      pollingEnabled,
+      enablePolling,
     );
     const server = app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);

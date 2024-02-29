@@ -62,6 +62,8 @@ class PollingService {
     await this.pollAndUpdate(true);
     await sleep(this.currentPollingIntervalMs);
 
+    console.log("PollingService: finished full sync, starting polling loop");
+
     while (this.active) {
       await this.pollAndUpdate();
       await sleep(this.currentPollingIntervalMs);
@@ -103,16 +105,16 @@ class PollingService {
     return PollingService.FINAL_STATUSES.includes(tx.status);
   }
 
-  private txResponseToTxDetails(tr: TransactionResponse): ITransactionDetails {
+  private txResponseToTxDetails(tx: TransactionResponse): ITransactionDetails {
     return {
-      ...tr,
+      ...tx,
       subStatus:
-        TransactionSubStatus[tr.subStatus as keyof typeof TransactionSubStatus],
-      destinations: tr.destinations?.map((dest) => ({
+        TransactionSubStatus[tx.subStatus as keyof typeof TransactionSubStatus],
+      destinations: tx.destinations?.map((dest) => ({
         ...dest,
         amountUSD: Number(dest.amountUSD),
       })),
-      signedMessages: tr.signedMessages!,
+      signedMessages: tx.signedMessages!,
     };
   }
 
