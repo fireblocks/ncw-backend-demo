@@ -6,18 +6,6 @@ import { Message } from "../model/message";
 import { Wallet } from "../model/wallet";
 import { Transaction } from "../model/transaction";
 
-export async function handleTransactionCreatedOrUpdated(
-  id: string,
-  status: TransactionStatus,
-  data: ITransactionDetails,
-) {
-  try {
-    return await handleTransactionStatusUpdated(id, status, data);
-  } catch (error) {
-    return await handleTransactionCreated(id, status, data);
-  }
-}
-
 export async function handleTransactionStatusUpdated(
   id: string,
   status: TransactionStatus,
