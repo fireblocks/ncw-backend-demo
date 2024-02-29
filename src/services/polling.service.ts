@@ -34,17 +34,14 @@ class PollingService {
   private readonly pollingShortIntervalMs: number = 10_000;
   private currentPollingIntervalMs: number;
   private incomingTxTimer: NodeJS.Timeout | null;
-
-  static readonly FINAL_STATUSES: TransactionStatus[] = [
+  private static readonly FINAL_STATUSES: TransactionStatus[] = [
     TransactionStatus.COMPLETED,
     TransactionStatus.CANCELLED,
     TransactionStatus.REJECTED,
     TransactionStatus.FAILED,
     TransactionStatus.BLOCKED,
   ];
-
   private static instance: PollingService;
-
   private constructor(private readonly clients: Clients) {
     this.active = false;
     this.currentPollingIntervalMs = this.pollingIntervalMs;
@@ -58,6 +55,29 @@ class PollingService {
     PollingService.instance?.stop();
     PollingService.instance = new PollingService(clients);
     return PollingService.instance;
+  }
+
+  public async start() {
+    console.log("PollingService: start");
+    this.active = true;
+
+    // perform full sync first
+    await this.pollAndUpdate(true);
+    await sleep(this.currentPollingIntervalMs);
+
+    while (this.active) {
+      await this.pollAndUpdate();
+      await sleep(this.currentPollingIntervalMs);
+    }
+  }
+
+  public stop() {
+    console.log("PollingService: 'stop' received");
+    this.active = false;
+    if (this.incomingTxTimer) {
+      clearTimeout(this.incomingTxTimer);
+      this.incomingTxTimer = null;
+    }
   }
 
   private async getDbTxs(
@@ -121,11 +141,36 @@ class PollingService {
     }, 120_000);
   }
 
+  private async upsertTx(
+    txResponse: TransactionResponse,
+    dbTxsById: Record<
+      string,
+      Pick<Transaction, "id" | "createdAt" | "lastUpdated" | "status">[]
+    >,
+  ) {
+    try {
+      const tx = this.txResponseToTxDetails(txResponse);
+      const { id, status } = tx;
+      await patchTransactionAmountUsd(tx, this.clients.cmc);
+
+      if (!dbTxsById[tx.id]) {
+        // Tx doesn't exist in DB yet
+        await handleTransactionCreated(id, status, tx);
+        this.increasePollingFrequency();
+      } else if (new Date(tx.lastUpdated) > dbTxsById[tx.id][0].lastUpdated) {
+        // Tx exists in DB and it was updated in Fireblocks
+        await handleTransactionStatusUpdated(id, status, tx);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   /**
    * Polls transactions from Fireblocks and updates the DB
    * @param all - if true, will poll all transactions, otherwise will poll only recent transactions
    */
-  async pollAndUpdate(all: boolean = false) {
+  private async pollAndUpdate(all: boolean = false) {
     try {
       // Get transactions from DB (ignore transactions that were not updated for more than 48 hours):
       const dbTxs = await this.getDbTxs(
@@ -158,50 +203,10 @@ class PollingService {
 
       const dbTxsById = groupBy(dbTxs, (tx) => tx.id);
       for (const txResponse of txsResponses) {
-        const tx = this.txResponseToTxDetails(txResponse);
-        const { id, status } = tx;
-        await patchTransactionAmountUsd(tx, this.clients.cmc);
-
-        try {
-          if (!dbTxsById[tx.id]) {
-            // Tx doesn't exist in DB yet
-            await handleTransactionCreated(id, status, tx);
-            this.increasePollingFrequency();
-          } else if (
-            new Date(tx.lastUpdated) > dbTxsById[tx.id][0].lastUpdated
-          ) {
-            // Tx exists in DB and it was updated in Fireblocks
-            await handleTransactionStatusUpdated(id, status, tx);
-          }
-        } catch (error) {
-          console.error(error);
-        }
+        await this.upsertTx(txResponse, dbTxsById);
       }
     } catch (error) {
       console.error(error);
-    }
-  }
-
-  async start() {
-    console.log("PollingService: start");
-    this.active = true;
-
-    // perform full sync first
-    await this.pollAndUpdate(true);
-    await sleep(this.currentPollingIntervalMs);
-
-    while (this.active) {
-      await this.pollAndUpdate();
-      await sleep(this.currentPollingIntervalMs);
-    }
-  }
-
-  stop() {
-    console.log("PollingService: 'stop' received");
-    this.active = false;
-    if (this.incomingTxTimer) {
-      clearTimeout(this.incomingTxTimer);
-      this.incomingTxTimer = null;
     }
   }
 }
