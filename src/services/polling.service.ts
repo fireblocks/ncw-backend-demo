@@ -15,7 +15,7 @@ import {
   ITransactionDetails,
   TransactionSubStatus,
 } from "../interfaces/transaction";
-import { fetchAllTxs } from "../util/fetch-all";
+import { fetchAll } from "../util/fetch-all";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -143,12 +143,17 @@ class PollingService {
       }
 
       // Get transactions from Fireblocks:
-      const txsResponses: TransactionResponse[] = await fetchAllTxs(
-        (pagePath) =>
-          this.clients.admin.getTransactionsWithPageInfo(
+      const txsResponses: TransactionResponse[] = await fetchAll(
+        async ({ pageCursor }) => {
+          const resp = await this.clients.admin.getTransactionsWithPageInfo(
             txPageFilter,
-            pagePath,
-          ),
+            pageCursor,
+          );
+          return {
+            data: resp.transactions,
+            nextCursor: resp.pageDetails.nextPage,
+          };
+        },
       );
 
       const dbTxsById = groupBy(dbTxs, (tx) => tx.id);
