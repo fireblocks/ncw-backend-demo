@@ -35,7 +35,7 @@ function createApp(
     createDeviceRoute(clients);
   const passphraseRoute = createPassphraseRoute();
   const webhookRoute = createWebhook(clients, webhookPublicKey);
-  const userContoller = new UserController(new UserService());
+  const userController = new UserController(new UserService());
 
   const pollingService = PollingService.createInstance(clients);
   console.log(`Polling enabled: ${pollingEnabled}`);
@@ -58,7 +58,11 @@ function createApp(
 
   app.get("/", (req: Request, res: Response) => res.send("OK"));
 
-  app.post("/api/login", validateUser, userContoller.login.bind(userContoller));
+  app.post(
+    "/api/login",
+    validateUser,
+    userController.login.bind(userController),
+  );
   app.use("/api/passphrase", validateUser, passphraseRoute);
   app.use("/api/devices", validateUser, deviceRoute);
   app.use("/api/wallets", validateUser, walletRoute);
