@@ -25,7 +25,7 @@ const groupBy = <T, K extends keyof never>(arr: T[], key: (i: T) => K) =>
     {} as Record<K, T[]>,
   );
 
-export class PollingService {
+class PollingService {
   private active: boolean;
   private readonly pollingIntervalMs: number = 60_000;
   private readonly pollingShortIntervalMs: number = 10_000;
@@ -40,9 +40,21 @@ export class PollingService {
     TransactionStatus.BLOCKED,
   ];
 
-  constructor(private readonly clients: Clients) {
+  private static instance: PollingService;
+
+  private constructor(private readonly clients: Clients) {
     this.active = false;
     this.currentPollingIntervalMs = this.pollingIntervalMs;
+  }
+
+  public static getInstance(): PollingService {
+    return PollingService.instance;
+  }
+
+  public static createInstance(clients: Clients): PollingService {
+    PollingService.instance?.stop();
+    PollingService.instance = new PollingService(clients);
+    return PollingService.instance;
   }
 
   private async getDbRecentTransactionsSorted(
@@ -199,3 +211,5 @@ export class PollingService {
     }
   }
 }
+
+export { PollingService };
