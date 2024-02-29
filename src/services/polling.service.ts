@@ -5,10 +5,6 @@ import {
 } from "fireblocks-sdk";
 import { Clients } from "../interfaces/Clients";
 import { patchTransactionAmountUsd } from "../util/cmc/patchTransactionAmountUsd";
-import {
-  handleTransactionCreated,
-  handleTransactionStatusUpdated,
-} from "./webhook.service";
 import { Transaction } from "../model/transaction";
 import { FindOptionsWhere, MoreThan } from "typeorm";
 import {
@@ -16,6 +12,7 @@ import {
   TransactionSubStatus,
 } from "../interfaces/transaction";
 import { fetchAll } from "../util/fetch-all";
+import * as TransactionDbHelper from "./transactionDbHelper.service";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -155,11 +152,11 @@ class PollingService {
 
       if (!dbTxsById[tx.id]) {
         // Tx doesn't exist in DB yet
-        await handleTransactionCreated(id, status, tx);
+        await TransactionDbHelper.create(id, status, tx);
         this.increasePollingFrequency();
       } else if (new Date(tx.lastUpdated) > dbTxsById[tx.id][0].lastUpdated) {
         // Tx exists in DB and it was updated in Fireblocks
-        await handleTransactionStatusUpdated(id, status, tx);
+        await TransactionDbHelper.update(id, status, tx);
       }
     } catch (error) {
       console.error(error);

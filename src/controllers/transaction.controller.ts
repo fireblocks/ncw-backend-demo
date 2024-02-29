@@ -14,6 +14,7 @@ import {
   buildAccountTransferArgs,
   buildTestTypedDataArgs,
 } from "../util/transactionBuilder";
+import * as TransactionDbHelper from "../services/transactionDbHelper.service";
 
 export class TransactionController {
   constructor(
@@ -27,7 +28,7 @@ export class TransactionController {
 
     try {
       const { walletId } = device!;
-      const transaction = await this.service.findOne(txId, walletId);
+      const transaction = await TransactionDbHelper.findOne(txId, walletId);
       if (!transaction) {
         return res.status(404).json();
       }
@@ -45,7 +46,7 @@ export class TransactionController {
 
     try {
       const { walletId } = device!;
-      const transaction = await this.service.findOne(txId, walletId);
+      const transaction = await TransactionDbHelper.findOne(txId, walletId);
 
       if (!transaction) {
         return res.status(404).json();
@@ -170,7 +171,7 @@ export class TransactionController {
     try {
       const { walletId } = device!;
 
-      let transactions = await this.service.find(
+      let transactions = await TransactionDbHelper.find(
         walletId,
         orderBy as "lastUpdated" | "createdAt",
         startDate,
