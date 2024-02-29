@@ -21,7 +21,6 @@ const logger = morgan("combined");
 
 const visibilityTimeout = 120_000;
 const waitForTransactionTimeout = 10_000;
-let pollingService: PollingService;
 
 function createApp(
   authOpts: AuthOptions,
@@ -38,8 +37,7 @@ function createApp(
   const webhookRoute = createWebhook(clients, webhookPublicKey);
   const userContoller = new UserController(new UserService());
 
-  pollingService?.stop();
-  pollingService = new PollingService(clients);
+  const pollingService = PollingService.createInstance(clients);
   console.log(`Polling enabled: ${pollingEnabled}`);
   if (pollingEnabled) {
     pollingService.start();
@@ -128,9 +126,4 @@ function createApp(
   return { app, socketIO };
 }
 
-export {
-  createApp,
-  visibilityTimeout,
-  waitForTransactionTimeout,
-  pollingService,
-};
+export { createApp, visibilityTimeout, waitForTransactionTimeout };
