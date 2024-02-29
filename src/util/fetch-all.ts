@@ -1,4 +1,4 @@
-import { TransactionPageResponse, Web3PagedResponse } from "fireblocks-sdk";
+import { Web3PagedResponse } from "fireblocks-sdk";
 
 interface IPage {
   pageCursor?: string;
@@ -24,29 +24,6 @@ export async function fetchAll<T>(
 ): Promise<Array<T>> {
   const arr = [];
   for await (const assets of fetchPaged(fetcher, pageSize)) {
-    arr.push(assets);
-  }
-  return arr;
-}
-
-// ------------------------------------------------------------
-
-type TFetcherTxs = (pagePath?: string) => Promise<TransactionPageResponse>;
-
-export async function* fetchPagedTxs(fetcher: TFetcherTxs) {
-  let nextPage;
-  do {
-    const resp = await fetcher(nextPage);
-    if (resp?.transactions) {
-      yield* resp?.transactions;
-    }
-    nextPage = resp?.pageDetails?.nextPage;
-  } while (nextPage);
-}
-
-export async function fetchAllTxs(fetcher: TFetcherTxs) {
-  const arr = [];
-  for await (const assets of fetchPagedTxs(fetcher)) {
     arr.push(assets);
   }
   return arr;
