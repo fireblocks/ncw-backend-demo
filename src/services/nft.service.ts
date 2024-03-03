@@ -6,12 +6,12 @@ export class NFTService {
   constructor(private readonly clients: Clients) {}
 
   async getNFT(tokenId: string) {
-    return await this.clients.admin.getNFT(tokenId);
+    return await this.clients.signer.getNFT(tokenId);
   }
 
   async getOwnedNFTs(ncwId: string, ncwAccountIds: string[]) {
     return await fetchAll((page) =>
-      this.clients.admin.getOwnedNFTs({
+      this.clients.signer.getOwnedNFTs({
         ncwAccountIds,
         ncwId,
         walletType: NFTOwnershipWalletType.END_USER_WALLET,
@@ -22,7 +22,7 @@ export class NFTService {
 
   async listOwnedCollections(ncwId: string) {
     return await fetchAll((page) =>
-      this.clients.admin.listOwnedCollections({
+      this.clients.signer.listOwnedCollections({
         ncwId,
         walletType: NFTOwnershipWalletType.END_USER_WALLET,
         ...page,
@@ -32,7 +32,7 @@ export class NFTService {
 
   async listOwnedAssets(ncwId: string) {
     return await fetchAll((page) =>
-      this.clients.admin.listOwnedAssets({
+      this.clients.signer.listOwnedAssets({
         ncwId,
         walletType: NFTOwnershipWalletType.END_USER_WALLET,
         ...page,
