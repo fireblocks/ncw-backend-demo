@@ -7,7 +7,6 @@ import { createMessageRoute } from "./message.route";
 import { createTransactionRoute } from "./transaction.route";
 import { DeviceService } from "../services/device.service";
 import { createWeb3Route } from "./web3.route";
-
 import compression from "compression";
 
 export function createDeviceRoute(clients: Clients) {
