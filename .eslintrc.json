@@ -11,6 +11,8 @@
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "require-await": ["error"]
+    "require-await": ["error"],
+    "semi": ["error", "always"],
+    "no-multi-spaces": ["error"]
   }
 }
