@@ -298,14 +298,14 @@ describe("e2e", () => {
 
   async function listOwnedCollections() {
     return await request(app)
-      .get(`/api/devices/${deviceId}/accounts/${0}/nfts/ownership/collections`)
+      .get(`/api/devices/${deviceId}/nfts/ownership/collections`)
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
 
   async function listOwnedAssets() {
     return await request(app)
-      .get(`/api/devices/${deviceId}/accounts/${0}/nfts/ownership/assets`)
+      .get(`/api/devices/${deviceId}/nfts/ownership/assets`)
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
