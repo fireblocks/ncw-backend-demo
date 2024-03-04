@@ -1,4 +1,5 @@
 import {
+  PeerType,
   TransactionPageFilter,
   TransactionResponse,
   TransactionStatus,
@@ -118,6 +119,39 @@ class PollingService {
     };
   }
 
+  private async fetchNcwTransactions(txPageFilter: TransactionPageFilter) {
+    const fetchTransactions = (txPageFilter: TransactionPageFilter) =>
+      fetchAll(async ({ pageCursor }) => {
+        const resp = await this.clients.signer.getTransactionsWithPageInfo(
+          txPageFilter,
+          pageCursor,
+        );
+        return {
+          data: resp.transactions,
+          nextCursor: resp.pageDetails.nextPage,
+        };
+      });
+
+    const [txs1, txs2] = await Promise.all([
+      fetchTransactions({
+        ...txPageFilter,
+        sourceType: PeerType.END_USER_WALLET,
+      }),
+      fetchTransactions({
+        ...txPageFilter,
+        destType: PeerType.END_USER_WALLET,
+      }),
+    ]);
+
+    if (txPageFilter.sort === "ASC") {
+      return [...txs1, ...txs2].sort((a, b) => a.createdAt - b.createdAt);
+    } else if (txPageFilter.sort === "DESC") {
+      return [...txs1, ...txs2].sort((a, b) => b.createdAt - a.createdAt);
+    } else {
+      return [...txs1, ...txs2];
+    }
+  }
+
   /**
    * Increases the current polling frequency for a short period of time
    */
@@ -187,18 +221,8 @@ class PollingService {
       }
 
       // Get transactions from Fireblocks:
-      const txsResponses: TransactionResponse[] = await fetchAll(
-        async ({ pageCursor }) => {
-          const resp = await this.clients.admin.getTransactionsWithPageInfo(
-            txPageFilter,
-            pageCursor,
-          );
-          return {
-            data: resp.transactions,
-            nextCursor: resp.pageDetails.nextPage,
-          };
-        },
-      );
+      const txsResponses: TransactionResponse[] =
+        await this.fetchNcwTransactions(txPageFilter);
 
       const dbTxsById = groupBy(dbTxs, (tx) => tx.id);
       for (const txResponse of txsResponses) {
