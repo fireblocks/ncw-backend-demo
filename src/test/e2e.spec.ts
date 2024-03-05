@@ -25,6 +25,11 @@ import { mockInfoResponse } from "./mockInfoResponse";
 import { Passphrase, PassphraseLocation } from "../model/passphrase";
 import { DEFAULT_ORIGIN } from "../server";
 import { AuthOptions } from "../middleware/jwt";
+import {
+  ownedAssetsMock,
+  ownedCollectionsMock,
+  ownedNftsMock,
+} from "./nft.mock";
 
 import ioClient from "socket.io-client";
 import io from "socket.io";
@@ -280,6 +285,27 @@ describe("e2e", () => {
   async function getLatestBackup(walletId: string) {
     return await request(app)
       .get(`/api/wallets/${walletId}/backup/latest`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function getOwnedNFTs() {
+    return await request(app)
+      .get(`/api/devices/${deviceId}/accounts/${0}/nfts/ownership/tokens`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function listOwnedCollections() {
+    return await request(app)
+      .get(`/api/devices/${deviceId}/nfts/ownership/collections`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function listOwnedAssets() {
+    return await request(app)
+      .get(`/api/devices/${deviceId}/nfts/ownership/assets`)
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -658,6 +684,38 @@ describe("e2e", () => {
       deviceId,
       location,
       createdAt: 0,
+    });
+  });
+
+  describe("nft", () => {
+    it("should get owned nfts", async () => {
+      when(fireblocksSdk.getOwnedNFTs(anything())).thenResolve({
+        data: ownedNftsMock,
+      });
+      await createUser();
+      await createWallet();
+      const ownedNfts = await getOwnedNFTs();
+      expect(ownedNfts.body).toEqual(ownedNftsMock);
+    });
+
+    it("should list owned collection", async () => {
+      when(fireblocksSdk.listOwnedCollections(anything())).thenResolve({
+        data: ownedCollectionsMock,
+      });
+      await createUser();
+      await createWallet();
+      const ownedCollections = await listOwnedCollections();
+      expect(ownedCollections.body).toEqual(ownedCollectionsMock);
+    });
+
+    it("should list owned assets", async () => {
+      when(fireblocksSdk.listOwnedAssets(anything())).thenResolve({
+        data: ownedAssetsMock,
+      });
+      await createUser();
+      await createWallet();
+      const ownedAssets = await listOwnedAssets();
+      expect(ownedAssets.body).toEqual(ownedAssetsMock);
     });
   });
 

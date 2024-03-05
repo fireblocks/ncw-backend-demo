@@ -7,13 +7,14 @@ import { createMessageRoute } from "./message.route";
 import { createTransactionRoute } from "./transaction.route";
 import { DeviceService } from "../services/device.service";
 import { createWeb3Route } from "./web3.route";
-
 import compression from "compression";
+import { createNFTRoutes } from "./nft.route";
 
 export function createDeviceRoute(clients: Clients) {
   const transactionsRoute = createTransactionRoute(clients);
   const messagesRoute = createMessageRoute();
-  const accountsRoute = createAccountsRoute(clients);
+  const { walletNFTRoute, accountNFTRoute } = createNFTRoutes(clients);
+  const accountsRoute = createAccountsRoute(clients, accountNFTRoute);
   const web3Route = createWeb3Route(clients);
 
   const service = new DeviceService(clients);
@@ -28,6 +29,7 @@ export function createDeviceRoute(clients: Clients) {
   route.use("/:deviceId", validateDevice);
   route.use("/:deviceId/transactions", transactionsRoute);
   route.use("/:deviceId/accounts", accountsRoute);
+  route.use("/:deviceId/nfts", walletNFTRoute);
   route.use("/:deviceId/messages", messagesRoute);
   route.use("/:deviceId/web3", web3Route);
   route.post("/:deviceId/rpc", compression(), controller.rpc.bind(controller));
