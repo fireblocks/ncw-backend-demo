@@ -10,13 +10,13 @@ export function createNFTRoutes(clients: Clients) {
   const service = new NFTService(clients);
   const controller = new NFTController(service);
 
-  // requires accountId
+  // requires walletId and accountId
   accountNFTRoute.get(
     "/ownership/tokens",
     controller.getOwnedNFTs.bind(controller),
   );
 
-  // doesn't require accountId
+  // requires walletId
   walletNFTRoute.get(
     "/ownership/collections",
     controller.listOwnedCollections.bind(controller),
