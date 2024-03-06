@@ -4,6 +4,19 @@ import { And, FindOptionsOrderValue, In, LessThan, MoreThan } from "typeorm";
 import { ITransactionDetails } from "../interfaces/transaction";
 import { Wallet } from "../model/wallet";
 
+async function createOrUpdate(
+  id: string,
+  status: TransactionStatus,
+  data: ITransactionDetails,
+) {
+  let success = await create(id, status, data);
+  if (!success) {
+    success = await update(id, status, data);
+  }
+
+  return success;
+}
+
 async function findOne(txId: string, walletId: string) {
   return await Transaction.findOne({
     where: {
@@ -50,13 +63,14 @@ async function update(
   // Ensure consistency
   if (tx.lastUpdated >= new Date(data.lastUpdated)) {
     console.warn(`Transaction id ${id}: already updated. Skipping update`);
-    return;
+    return false;
   }
 
   tx.status = status;
   tx.details = data;
   tx.lastUpdated = new Date(data.lastUpdated);
   await tx.save();
+  return true;
 }
 
 async function create(
@@ -95,10 +109,11 @@ async function create(
   const existingTx = await Transaction.findOne({ where: { id } });
   if (existingTx) {
     console.warn(`Transaction id ${id}: already exists. Skipping create`);
-    return;
+    return false;
   }
 
   await tx.save();
+  return true;
 }
 
-export { findOne, find, update, create };
+export { findOne, find, update, create, createOrUpdate };

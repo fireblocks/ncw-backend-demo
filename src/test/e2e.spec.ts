@@ -32,7 +32,7 @@ import { Passphrase, PassphraseLocation } from "../model/passphrase";
 import { DEFAULT_ORIGIN, init } from "../server";
 import { AuthOptions } from "../middleware/jwt";
 import { transactionMock } from "./mockTransaction";
-import { PollingService } from "../services/polling.service";
+import { PollingMode, PollingService } from "../services/polling.service";
 
 import ioClient from "socket.io-client";
 import io from "socket.io";
@@ -481,7 +481,7 @@ describe("e2e", () => {
       ],
       pageDetails: {} as PageDetails,
     });
-    await PollingService.getInstance()["pollAndUpdate"]();
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
     expect((await getTransactions()).body).toMatchObject([{ id: txId }]);
 
     when(
@@ -495,7 +495,7 @@ describe("e2e", () => {
       ],
       pageDetails: {} as PageDetails,
     });
-    await PollingService.getInstance()["pollAndUpdate"]();
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
     expect(
       (await getTransactions([TransactionStatus.CONFIRMING])).body,
     ).toEqual([]);
@@ -515,7 +515,7 @@ describe("e2e", () => {
       ],
       pageDetails: {} as PageDetails,
     });
-    await PollingService.getInstance()["pollAndUpdate"]();
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
     const res = (
       await getTransactions([
         TransactionStatus.CANCELLED,
@@ -558,7 +558,7 @@ describe("e2e", () => {
       pageDetails: {} as PageDetails,
     });
     await Promise.all([
-      PollingService.getInstance()["pollAndUpdate"](),
+      PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT),
       webhookTransaction(
         txId,
         "TRANSACTION_CREATED",
@@ -585,7 +585,7 @@ describe("e2e", () => {
       pageDetails: {} as PageDetails,
     });
     await Promise.all([
-      PollingService.getInstance()["pollAndUpdate"](),
+      PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT),
       webhookTransaction(
         txId,
         "TRANSACTION_STATUS_UPDATED",
