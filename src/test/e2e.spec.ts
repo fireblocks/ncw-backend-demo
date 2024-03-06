@@ -38,7 +38,7 @@ import { symbolMockTestTransform } from "../util/cmc/symbolMockTestTransform";
 
 import { AuthOptions } from "../middleware/jwt";
 import { transactionMock } from "./mockTransaction";
-import { PollingService } from "../services/polling.service";
+import { PollingMode, PollingService } from "../services/polling.service";
 import {
   ownedAssetsMock,
   ownedCollectionsMock,
@@ -525,7 +525,7 @@ describe("e2e", () => {
       ],
       pageDetails: {} as PageDetails,
     });
-    await PollingService.getInstance()["pollAndUpdate"]();
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
     expect((await getTransactions()).body).toMatchObject([{ id: txId }]);
 
     when(
@@ -539,7 +539,7 @@ describe("e2e", () => {
       ],
       pageDetails: {} as PageDetails,
     });
-    await PollingService.getInstance()["pollAndUpdate"]();
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
     expect(
       (await getTransactions([TransactionStatus.CONFIRMING])).body,
     ).toEqual([]);
@@ -559,7 +559,7 @@ describe("e2e", () => {
       ],
       pageDetails: {} as PageDetails,
     });
-    await PollingService.getInstance()["pollAndUpdate"]();
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
     const res = (
       await getTransactions([
         TransactionStatus.CANCELLED,
@@ -602,7 +602,7 @@ describe("e2e", () => {
       pageDetails: {} as PageDetails,
     });
     await Promise.all([
-      PollingService.getInstance()["pollAndUpdate"](),
+      PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT),
       webhookTransaction(
         txId,
         "TRANSACTION_CREATED",
@@ -629,7 +629,7 @@ describe("e2e", () => {
       pageDetails: {} as PageDetails,
     });
     await Promise.all([
-      PollingService.getInstance()["pollAndUpdate"](),
+      PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT),
       webhookTransaction(
         txId,
         "TRANSACTION_STATUS_UPDATED",

@@ -7,13 +7,14 @@ import {
 import { Clients } from "../interfaces/Clients";
 import { patchTransactionAmountUsd } from "../util/cmc/patchTransactionAmountUsd";
 import { Transaction } from "../model/transaction";
-import { FindOptionsWhere, MoreThan } from "typeorm";
+import { FindOptionsWhere, In, MoreThan } from "typeorm";
 import {
   ITransactionDetails,
   TransactionSubStatus,
 } from "../interfaces/transaction";
 import { fetchAll } from "../util/fetch-all";
 import * as TransactionDbHelper from "./transactionDbHelper.service";
+import { eventEmitter } from "../util/eventEmitter";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -26,23 +27,113 @@ const groupBy = <T, K extends keyof never>(arr: T[], key: (i: T) => K) =>
     {} as Record<K, T[]>,
   );
 
+const TX_FINAL_STATUSES: TransactionStatus[] = [
+  TransactionStatus.COMPLETED,
+  TransactionStatus.CANCELLED,
+  TransactionStatus.REJECTED,
+  TransactionStatus.FAILED,
+  TransactionStatus.BLOCKED,
+];
+const isTxFinal = (tx: { status: TransactionStatus }) =>
+  TX_FINAL_STATUSES.includes(tx.status);
+
+enum PollingMode {
+  ALL,
+  RECENT,
+  BY_IDS,
+}
+
+/**
+ * Represents a poller for active transactions.
+ */
+class ActiveTxPoller {
+  private activeTxIds: Set<string> = new Set();
+  private active: boolean = false;
+  private txEventCallback: (txId: string) => void = (txId) => {
+    console.debug(`ActiveTxPoller: tx event received for ${txId}`);
+    this.addActiveTx(txId);
+  };
+
+  constructor(
+    private readonly pollAndUpdateFn: (
+      mode: PollingMode,
+      txIds?: string[],
+    ) => Promise<void>,
+    private readonly pollingIntervalMs: number = 10_000,
+  ) {}
+
+  public initTxListener() {
+    console.debug("ActiveTxPoller: initTxListener");
+    this.removeTxListener();
+    eventEmitter
+      .on("tx_created", this.txEventCallback)
+      .on("tx_cancelled", this.txEventCallback);
+  }
+
+  public removeTxListener() {
+    console.debug("ActiveTxPoller: removeTxListener");
+    eventEmitter
+      .removeListener("tx_created", this.txEventCallback)
+      .removeListener("tx_cancelled", this.txEventCallback);
+  }
+
+  public handleActiveTx(tx: Pick<ITransactionDetails, "id" | "status">) {
+    if (isTxFinal(tx)) {
+      this.removeActiveTx(tx.id);
+    } else {
+      this.addActiveTx(tx.id);
+    }
+  }
+
+  private async startPolling() {
+    if (!this.active) {
+      console.debug(
+        `ActiveTxPoller: polling loop started with interval: ${
+          this.pollingIntervalMs / 1000
+        } seconds`,
+      );
+      this.active = true;
+      while (this.activeTxIds.size > 0) {
+        await this.pollAndUpdateFn(
+          PollingMode.BY_IDS,
+          Array.from(this.activeTxIds),
+        );
+        await sleep(this.pollingIntervalMs);
+      }
+      this.active = false;
+      console.debug("ActiveTxPoller: polling loop finished");
+    }
+  }
+
+  private addActiveTx(txId: string) {
+    console.debug(`ActiveTxPoller: addActiveTx ${txId}`);
+    this.activeTxIds.add(txId);
+    this.setRemoveTimer(txId);
+    this.startPolling();
+  }
+
+  private removeActiveTx(txId: string) {
+    console.debug(`ActiveTxPoller: removeActiveTx ${txId}`);
+    this.activeTxIds.delete(txId);
+  }
+
+  private setRemoveTimer(txId: string) {
+    setTimeout(() => this.removeActiveTx(txId), 120000);
+  }
+}
+
 class PollingService {
-  private active: boolean;
-  private readonly pollingIntervalMs: number = 60_000;
-  private readonly pollingShortIntervalMs: number = 10_000;
-  private currentPollingIntervalMs: number;
-  private incomingTxTimer: NodeJS.Timeout | null;
-  private static readonly FINAL_STATUSES: TransactionStatus[] = [
-    TransactionStatus.COMPLETED,
-    TransactionStatus.CANCELLED,
-    TransactionStatus.REJECTED,
-    TransactionStatus.FAILED,
-    TransactionStatus.BLOCKED,
-  ];
   private static instance: PollingService;
-  private constructor(private readonly clients: Clients) {
+
+  private activeTxPoller: ActiveTxPoller;
+  private active: boolean;
+
+  private constructor(
+    private readonly clients: Clients,
+    private readonly pollingIntervalMs: number = 60_000,
+  ) {
     this.active = false;
-    this.currentPollingIntervalMs = this.pollingIntervalMs;
+    this.activeTxPoller = new ActiveTxPoller(this.pollAndUpdate.bind(this));
   }
 
   public static getInstance(): PollingService {
@@ -56,38 +147,41 @@ class PollingService {
   }
 
   public async start() {
-    console.log("PollingService: start");
+    console.debug("PollingService: start");
     this.active = true;
+    this.activeTxPoller.initTxListener();
 
     // perform full sync first
-    await this.pollAndUpdate(true);
-    await sleep(this.currentPollingIntervalMs);
+    console.debug("PollingService: starting full sync");
+    await this.pollAndUpdate(PollingMode.ALL);
+    await sleep(this.pollingIntervalMs);
 
-    console.log("PollingService: finished full sync, starting polling loop");
-
+    console.debug(
+      `PollingService: starting polling loop with interval: ${
+        this.pollingIntervalMs / 1000
+      } seconds`,
+    );
     while (this.active) {
-      await this.pollAndUpdate();
-      await sleep(this.currentPollingIntervalMs);
+      await this.pollAndUpdate(PollingMode.RECENT);
+      await sleep(this.pollingIntervalMs);
     }
   }
 
   public stop() {
-    console.log("PollingService: 'stop' received");
+    console.debug("PollingService: 'stop' received");
     this.active = false;
-    if (this.incomingTxTimer) {
-      clearTimeout(this.incomingTxTimer);
-      this.incomingTxTimer = null;
-    }
+    this.activeTxPoller.removeTxListener();
   }
 
   private async getDbTxs(
+    txIds?: string[],
     minLastUpdated?: Date,
   ): Promise<
     Pick<Transaction, "id" | "createdAt" | "lastUpdated" | "status">[]
   > {
-    const where: FindOptionsWhere<Transaction> = minLastUpdated
-      ? { lastUpdated: MoreThan(minLastUpdated) }
-      : {};
+    let where: FindOptionsWhere<Transaction> = {};
+    if (minLastUpdated) where = { lastUpdated: MoreThan(minLastUpdated) };
+    if (txIds) where = { ...where, id: In(txIds) };
 
     return await Transaction.find({
       select: ["id", "createdAt", "lastUpdated", "status"],
@@ -102,10 +196,6 @@ class PollingService {
     return date;
   }
 
-  private isCompletedTx(tx: { status: TransactionStatus }) {
-    return PollingService.FINAL_STATUSES.includes(tx.status);
-  }
-
   private txResponseToTxDetails(tx: TransactionResponse): ITransactionDetails {
     return {
       ...tx,
@@ -117,6 +207,15 @@ class PollingService {
       })),
       signedMessages: tx.signedMessages!,
     };
+  }
+
+  private async fetchTransactionsByIds(txIds: string[]) {
+    const responses: TransactionResponse[] = [];
+    for (const txId of txIds) {
+      responses.push(await this.clients.signer.getTransactionById(txId));
+    }
+
+    return responses;
   }
 
   private async fetchNcwTransactions(txPageFilter: TransactionPageFilter) {
@@ -152,28 +251,6 @@ class PollingService {
     }
   }
 
-  /**
-   * Increases the current polling frequency for a short period of time
-   */
-  private increasePollingFrequency() {
-    console.log(
-      "PollingService: increasePollingFrequency - increase frequency",
-    );
-    this.currentPollingIntervalMs = this.pollingShortIntervalMs;
-
-    if (this.incomingTxTimer) {
-      clearTimeout(this.incomingTxTimer);
-      this.incomingTxTimer = null;
-    }
-
-    this.incomingTxTimer = setTimeout(() => {
-      console.log(
-        "PollingService: increasePollingFrequency - reset back to normal",
-      );
-      this.currentPollingIntervalMs = this.pollingIntervalMs;
-    }, 120_000);
-  }
-
   private async upsertTx(
     txResponse: TransactionResponse,
     dbTxsById: Record<
@@ -186,35 +263,38 @@ class PollingService {
       const { id, status } = tx;
       await patchTransactionAmountUsd(tx, this.clients.cmc);
 
-      if (!dbTxsById[tx.id]) {
-        // Tx doesn't exist in DB yet
-        await TransactionDbHelper.create(id, status, tx);
-        this.increasePollingFrequency();
-      } else if (new Date(tx.lastUpdated) > dbTxsById[tx.id][0].lastUpdated) {
-        // Tx exists in DB and it was updated in Fireblocks
-        await TransactionDbHelper.update(id, status, tx);
+      let success: boolean = false;
+      if (!dbTxsById[id]) {
+        // possibly new TX
+        success = await TransactionDbHelper.createOrUpdate(id, status, tx);
+      } else if (new Date(tx.lastUpdated) > dbTxsById[id][0].lastUpdated) {
+        // updated TX
+        success = await TransactionDbHelper.update(id, status, tx);
       }
+
+      if (success) this.activeTxPoller.handleActiveTx(tx);
     } catch (error) {
       console.error(error);
     }
   }
 
   /**
-   * Polls transactions from Fireblocks and updates the DB
-   * @param all - if true, will poll all transactions, otherwise will poll only recent transactions
+   * Polls and updates transactions based on the specified mode.
+   *
+   * @param mode - The polling mode.
+   * @param txIds - Optional array of transaction IDs to filter the polling results (relevant to PollingMode.BY_IDS only)
    */
-  private async pollAndUpdate(all: boolean = false) {
+  private async pollAndUpdate(mode: PollingMode, txIds?: string[]) {
     try {
-      // Get transactions from DB (ignore transactions that were not updated for more than 48 hours):
-      const dbTxs = await this.getDbTxs(
-        all ? undefined : this.hoursAgoDate(48),
-      );
+      // Get transactions from DB
+      const minLastUpdated =
+        mode === PollingMode.RECENT ? this.hoursAgoDate(48) : undefined;
+      const dbTxs = await this.getDbTxs(txIds, minLastUpdated);
 
       let txPageFilter: TransactionPageFilter = {};
-      if (!all) {
+      if (mode === PollingMode.RECENT) {
         // Get createdAt of earliest non-completed tx
-        const firstNonCompletedTx = dbTxs.find((tx) => !this.isCompletedTx(tx));
-
+        const firstNonCompletedTx = dbTxs.find((tx) => !isTxFinal(tx));
         const minCreatedAt =
           firstNonCompletedTx?.createdAt || this.hoursAgoDate(48);
         txPageFilter = { after: minCreatedAt.getTime() - 1 };
@@ -222,7 +302,9 @@ class PollingService {
 
       // Get transactions from Fireblocks:
       const txsResponses: TransactionResponse[] =
-        await this.fetchNcwTransactions(txPageFilter);
+        mode === PollingMode.BY_IDS
+          ? await this.fetchTransactionsByIds(txIds!)
+          : await this.fetchNcwTransactions(txPageFilter);
 
       const dbTxsById = groupBy(dbTxs, (tx) => tx.id);
       for (const txResponse of txsResponses) {
@@ -234,4 +316,4 @@ class PollingService {
   }
 }
 
-export { PollingService };
+export { PollingService, ActiveTxPoller, PollingMode };
