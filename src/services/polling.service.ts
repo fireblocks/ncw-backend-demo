@@ -311,7 +311,7 @@ class PollingService {
         await this.upsertTx(txResponse, dbTxsById);
       }
     } catch (error) {
-      console.error(error);
+      console.error("PollingService.pollAndUpdate: ", error);
     }
   }
 }
