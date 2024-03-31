@@ -24,6 +24,7 @@ dotenv.config();
 
 const port = process.env.PORT;
 
+// Warning: Polling is not to be used in a production environment. Use webhooks instead.
 const enablePolling = Boolean(process.env.ENABLE_POLLING);
 
 const DEFAULT_ORIGIN = [
