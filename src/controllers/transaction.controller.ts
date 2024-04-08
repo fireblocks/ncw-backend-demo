@@ -60,7 +60,7 @@ export class TransactionController {
   async create(req: Request, res: Response, next: NextFunction) {
     const { device, body } = req;
     const {
-      assetId = "ETH_TEST3",
+      assetId = "ETH_TEST5",
       accountId = "0",
       note = `API Transaction by ${req.auth?.payload.sub}`,
       destAddress = undefined,
