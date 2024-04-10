@@ -1,12 +1,11 @@
-import { NextFunction, Response } from "express";
-import { RequestEx } from "../interfaces/requestEx";
+import { NextFunction, Request, Response } from "express";
 import { Clients } from "../interfaces/Clients";
 import { fetchAll } from "../util/fetch-all";
 
 export class AccountContoller {
   constructor(private readonly clients: Clients) {}
 
-  async findAll(req: RequestEx, res: Response, next: NextFunction) {
+  async findAll(req: Request, res: Response, next: NextFunction) {
     const { device } = req;
     try {
       const { walletId } = device!;

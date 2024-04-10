@@ -1,12 +1,11 @@
-import { NextFunction, Response } from "express";
+import { Request, NextFunction, Response } from "express";
 import { Web3ConnectionFeeLevel } from "fireblocks-sdk";
-import { RequestEx } from "../interfaces/requestEx";
 import { Web3Service } from "../services/web3.service";
 
 export class Web3Controller {
   constructor(private readonly service: Web3Service) {}
 
-  async find(req: RequestEx, res: Response, next: NextFunction) {
+  async find(req: Request, res: Response, next: NextFunction) {
     const { device } = req;
 
     try {
@@ -18,7 +17,7 @@ export class Web3Controller {
     }
   }
 
-  async create(req: RequestEx, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction) {
     const { device, body } = req;
     const {
       uri,
@@ -41,7 +40,7 @@ export class Web3Controller {
     }
   }
 
-  async approve(req: RequestEx, res: Response, next: NextFunction) {
+  async approve(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { sessionId } = params;
 
@@ -54,7 +53,7 @@ export class Web3Controller {
     }
   }
 
-  async deny(req: RequestEx, res: Response, next: NextFunction) {
+  async deny(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { sessionId } = params;
 
@@ -67,7 +66,7 @@ export class Web3Controller {
     }
   }
 
-  async remove(req: RequestEx, res: Response, next: NextFunction) {
+  async remove(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { sessionId } = params;
 

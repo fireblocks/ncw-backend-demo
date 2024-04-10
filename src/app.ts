@@ -2,9 +2,7 @@ import morgan from "morgan";
 import cors from "cors";
 import express, { Express, Request, Response } from "express";
 import bodyParser from "body-parser";
-
-import { AuthOptions } from "express-oauth2-jwt-bearer";
-import { checkJwt } from "./middleware/jwt";
+import { AuthOptions, checkJwt } from "./middleware/jwt";
 import { createDeviceRoute } from "./routes/device.route";
 import { createWebhook } from "./routes/webhook.route";
 import { UserController } from "./controllers/user.controller";
@@ -13,33 +11,26 @@ import { Clients } from "./interfaces/Clients";
 import { errorHandler } from "./middleware/errorHandler";
 import { createPassphraseRoute } from "./routes/passphrase.route";
 import { createWalletRoute } from "./routes/wallet.route";
+import { Server as SocketIOServer } from "socket.io";
+import { Device } from "./model/device";
+import { jwtVerify } from "jose";
+import { RpcResponse } from "./interfaces/RpcResponse";
 
 const logger = morgan("combined");
 
 export const visibilityTimeout = 120_000;
 export const waitForTransactionTimeout = 10_000;
 
-const DEFAULT_ORIGIN = [
-  "http://localhost:5173",
-  "https://fireblocks.github.io",
-];
-
-function getOriginFromEnv(): string[] {
-  if (process.env.ORIGIN_WEB_SDK !== undefined) {
-    const origin = process.env.ORIGIN_WEB_SDK;
-    return origin.split(",");
-  }
-  return DEFAULT_ORIGIN;
-}
-
 function createApp(
   authOpts: AuthOptions,
   clients: Clients,
   webhookPublicKey: string,
-): express.Express {
+  origin: string[],
+): { app: express.Express; socketIO: SocketIOServer } {
   const validateUser = checkJwt(authOpts);
   const walletRoute = createWalletRoute(clients);
-  const deviceRoute = createDeviceRoute(clients);
+  const { route: deviceRoute, service: deviceService } =
+    createDeviceRoute(clients);
   const passphraseRoute = createPassphraseRoute();
   const webhookRoute = createWebhook(clients, webhookPublicKey);
   const userContoller = new UserController(new UserService());
@@ -50,7 +41,7 @@ function createApp(
 
   app.use(
     cors({
-      origin: getOriginFromEnv(),
+      origin,
       maxAge: 600,
     }),
   );
@@ -67,7 +58,64 @@ function createApp(
 
   app.use(errorHandler);
 
-  return app;
+  const socketIO = new SocketIOServer();
+
+  socketIO.on("connection", async (socket) => {
+    const token = socket.handshake?.auth?.token;
+    const { verify, key } = authOpts;
+
+    try {
+      if (!token) {
+        throw new Error("no token provided");
+      }
+
+      const payload = await jwtVerify(token, key, verify);
+      socket.handshake.auth.payload = payload;
+    } catch (e) {
+      console.error("failed authenticating socket", e);
+      socket.disconnect(true);
+      return;
+    }
+
+    socket.on(
+      "rpc",
+      async (
+        deviceId: string,
+        message: string,
+        cb: (response: RpcResponse) => void,
+      ) => {
+        const { payload } = socket.handshake.auth;
+        const device = await Device.findOne({
+          where: { id: deviceId, user: { sub: payload.sub } },
+        });
+        if (!device) {
+          cb({ error: { message: "Device not found" } });
+          return;
+        }
+
+        try {
+          const response = await deviceService.rpc(
+            device.walletId,
+            deviceId,
+            message,
+          );
+          cb(response);
+          return;
+        } catch (e) {
+          console.error("failed invoking RPC", e);
+          cb({
+            error: {
+              message: "Failed invoking RPC",
+              code: -1,
+            },
+          });
+          return;
+        }
+      },
+    );
+  });
+
+  return { app, socketIO };
 }
 
 export { createApp };

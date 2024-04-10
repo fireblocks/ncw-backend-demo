@@ -1,11 +1,10 @@
-import { NextFunction, Response } from "express";
+import { Request, NextFunction, Response } from "express";
 import {
   FeeLevel,
   PeerType,
   TransactionArguments,
   TransactionStatus,
 } from "fireblocks-sdk";
-import { RequestEx } from "../interfaces/requestEx";
 import { waitForTransactionTimeout } from "../app";
 import { TransactionSubscriber } from "../subscribers/transaction.subscriber";
 import { TransactionService } from "../services/transaction.service";
@@ -22,7 +21,7 @@ export class TransactionController {
     private readonly txSubscriber: TransactionSubscriber,
   ) {}
 
-  async cancel(req: RequestEx, res: Response, next: NextFunction) {
+  async cancel(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { txId } = params;
 
@@ -40,7 +39,7 @@ export class TransactionController {
     }
   }
 
-  async findOne(req: RequestEx, res: Response, next: NextFunction) {
+  async findOne(req: Request, res: Response, next: NextFunction) {
     const { device, params } = req;
     const { txId } = params;
 
@@ -58,10 +57,10 @@ export class TransactionController {
     }
   }
 
-  async create(req: RequestEx, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction) {
     const { device, body } = req;
     const {
-      assetId = "ETH_TEST3",
+      assetId = "ETH_TEST5",
       accountId = "0",
       note = `API Transaction by ${req.auth?.payload.sub}`,
       destAddress = undefined,
@@ -124,7 +123,7 @@ export class TransactionController {
     }
   }
 
-  async find(req: RequestEx, res: Response, next: NextFunction) {
+  async find(req: Request, res: Response, next: NextFunction) {
     const { query, device } = req;
 
     const startDate: Date = query.startDate

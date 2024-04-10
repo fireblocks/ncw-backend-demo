@@ -49,15 +49,23 @@ export class AssetService {
     if (!this.supportedAssets) {
       const assets = await fetchAll<IAsset>(async (page) => {
         const results = await this.clients.admin.NCW.getSupportedAssets(page);
-        const meta = await getMetadataForAssets(
-          results.data.map((a) => a.symbol),
-          this.clients.cmc,
-        );
+        const [rates, metadata] = await Promise.all([
+          getUsdRateForAssets(
+            results.data.map((a) => a.symbol),
+            this.clients.cmc,
+          ),
+          getMetadataForAssets(
+            results.data.map((a) => a.symbol),
+            this.clients.cmc,
+          ),
+        ]);
+
         return {
           ...results,
           data: results.data.map((asset) => ({
             ...asset,
-            iconUrl: meta[asset.symbol]?.logo,
+            rate: rates[asset.symbol],
+            iconUrl: metadata[asset.symbol]?.logo,
           })),
         };
       }, 50);

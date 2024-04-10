@@ -6,6 +6,7 @@ import {
   handleNcwDeviceMessage,
   handleTransactionCreated,
   handleTransactionStatusUpdated,
+  handleWalletEventMessage,
 } from "../services/webhook.service";
 
 export class WebhookController {
@@ -45,6 +46,15 @@ export class WebhookController {
           const { id, status } = data;
           await patchTransactionAmountUsd(data, this.clients.cmc);
           await handleTransactionStatusUpdated(id, status, data);
+          return res.status(200).send("ok");
+        }
+
+        case "NCW_CREATED":
+        case "NCW_ACCOUNT_CREATED":
+        case "NCW_ASSET_CREATED":
+        case "NCW_STATUS_UPDATED":
+        case "NCW_ADD_DEVICE_SETUP_REQUESTED": {
+          await handleWalletEventMessage(type, req.body);
           return res.status(200).send("ok");
         }
 

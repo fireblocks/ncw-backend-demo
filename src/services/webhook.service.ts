@@ -81,3 +81,10 @@ export async function handleNcwDeviceMessage(
   msg.message = JSON.stringify(data);
   await msg.save();
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function handleWalletEventMessage(event: string, payload: any) {
+  console.log(
+    `Received wallet event: ${event} with payload: ${JSON.stringify(payload)}`,
+  );
+}
