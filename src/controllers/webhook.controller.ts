@@ -41,6 +41,10 @@ export class WebhookController {
           return res.status(200).send("ok");
         }
 
+        case "NCW_TRANSACTION_STATUS_UPDATED": {
+          return res.status(200).send("ok");
+        }
+
         case "TRANSACTION_STATUS_UPDATED": {
           const { data } = req.body as ITransactionCreatedMessagePayload;
           const { id, status } = data;
