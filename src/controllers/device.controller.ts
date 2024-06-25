@@ -90,7 +90,7 @@ export class DeviceController {
     try {
       const { walletId } = device!;
       const response = await this.service.rpc(walletId, deviceId, message);
-      res.json(response);
+      res.json({ response });
     } catch (err) {
       return next(err);
     }

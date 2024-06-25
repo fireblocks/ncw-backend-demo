@@ -1,6 +1,6 @@
 export type RpcResponse =
   | {
-      result: string;
+      response: unknown;
     }
   | {
       error: {
