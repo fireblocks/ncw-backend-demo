@@ -99,7 +99,7 @@ function createApp(
             deviceId,
             message,
           );
-          cb(response);
+          cb({ response });
           return;
         } catch (e) {
           console.error("failed invoking RPC", e);
