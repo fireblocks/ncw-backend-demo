@@ -154,6 +154,9 @@ class PollingService {
     // perform full sync first
     console.debug("PollingService: starting full sync");
     await this.pollAndUpdate(PollingMode.ALL);
+    console.debug(
+      `PollingService: finished full sync, sleeping for ${this.pollingIntervalMs} ms..`,
+    );
     await sleep(this.pollingIntervalMs);
 
     console.debug(
