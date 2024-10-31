@@ -11,19 +11,25 @@ import { Message } from "../model/message";
 import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
 import { FireblocksSDK, NCW, TransactionStatus } from "fireblocks-sdk";
-import { anyString, anything, instance, mock, when } from "ts-mockito";
+import { anyString, anything, instance, mock, verify, when } from "ts-mockito";
 import { sign, Algorithm } from "jsonwebtoken";
 import { MessageSubscriber } from "../subscribers/message.subscriber";
 import { Transaction } from "../model/transaction";
 import { TransactionSubscriber } from "../subscribers/transaction.subscriber";
 import { CryptoClient } from "coinmarketcap-js";
 import { mockQuoteResponse } from "./mockQuoteResponse";
-import { assetInfoMock } from "./assetInfo.mock";
+import {
+  assetInfoMock,
+  baseAssetInfoMock,
+  nonBaseAssetInfoMock,
+} from "./assetInfo.mock";
 import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
 import { TAssetSummary } from "../services/asset.service";
 import { mockInfoResponse } from "./mockInfoResponse";
 import { Passphrase, PassphraseLocation } from "../model/passphrase";
 import { DEFAULT_ORIGIN } from "../server";
+import { symbolMockTestTransform } from "../util/cmc/symbolMockTestTransform";
+
 import { AuthOptions } from "../middleware/jwt";
 import {
   ownedAssetsMock,
@@ -53,6 +59,11 @@ const opts: AuthOptions = {
     algorithms: [algorithm],
   },
 };
+
+function removeEmpty(obj: object): object {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
+}
 
 function signJwt(payload: object) {
   return sign(payload, secret, {
@@ -190,6 +201,13 @@ describe("e2e", () => {
   async function getAssetSummary() {
     return await request(app)
       .get(`/api/devices/${deviceId}/accounts/${0}/assets/summary`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+  }
+
+  async function getSupportedAssets() {
+    return await request(app)
+      .get(`/api/devices/${deviceId}/accounts/${0}/assets/supported_assets`)
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -644,6 +662,51 @@ describe("e2e", () => {
     }
   });
 
+  describe("should get supported assets", () => {
+    const toSupportedAssetsResultMock = (assets: NCW.WalletAssetResponse[]) => {
+      return assets.map((a) =>
+        removeEmpty({
+          ...a,
+          rate: 1,
+          iconUrl: `https://test/${symbolMockTestTransform(a.id)}.png`,
+        }),
+      );
+    };
+
+    it("succes, with invalid/valid cache", async () => {
+      when(ncw.getWalletAssets(walletId, 0, anything())).thenResolve({
+        data: [],
+      });
+      when(ncw.getSupportedAssets(anything())).thenResolve({
+        data: Object.values(assetInfoMock),
+      });
+      await createUser();
+      await createWallet();
+      const { body } = await getSupportedAssets();
+      const { body: body2 } = await getSupportedAssets();
+      expect(body).toEqual(
+        toSupportedAssetsResultMock(Object.values(baseAssetInfoMock)),
+      );
+      expect(body).toEqual(body2);
+      verify(ncw.getSupportedAssets(anything())).once();
+    });
+
+    it("returns non-base-assets if base-assets exist for wallet", async () => {
+      when(ncw.getWalletAssets(walletId, 0, anything())).thenResolve({
+        data: Object.values(baseAssetInfoMock),
+      });
+      when(ncw.getSupportedAssets(anything())).thenResolve({
+        data: Object.values(assetInfoMock),
+      });
+      await createUser();
+      await createWallet();
+      const { body } = await getSupportedAssets();
+      expect(body).toEqual(
+        toSupportedAssetsResultMock(Object.values(nonBaseAssetInfoMock)),
+      );
+    });
+  });
+
   it("should be able to save and get passphrase info", async () => {
     await createUser();
     const passphraseId = crypto.randomUUID();
@@ -740,7 +803,7 @@ describe("e2e", () => {
       });
 
       const resp = await client.emitWithAck("rpc", deviceId, payload);
-      expect(resp).toEqual({ result: "ok" });
+      expect(resp).toEqual({ response: { result: "ok" } });
     });
 
     test("unauthenticated socket rpc should be disconnected", async () => {

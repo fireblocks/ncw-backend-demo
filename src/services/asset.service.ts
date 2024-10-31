@@ -28,8 +28,14 @@ export interface IAsset extends NCW.WalletAssetResponse {
 }
 
 export class AssetService {
+  private static readonly SUPPORTED_ASSETS_CACHE_DEFAULT_TTL = ms("24h");
+
   private feeCache: LRUCache<string, EstimateFeeResponse>;
-  private supportedAssets?: Array<IAsset> = undefined;
+  private supportedAssetsCache: {
+    assets: Array<IAsset>;
+    dateFetched: Date;
+    ttl: number;
+  };
 
   constructor(private readonly clients: Clients) {
     this.feeCache = new LRUCache<string, EstimateFeeResponse>({
@@ -46,7 +52,8 @@ export class AssetService {
   }
 
   async getSupportedAssets(): Promise<Array<IAsset>> {
-    if (!this.supportedAssets) {
+    if (this._shouldRefreshSupportedAssetsCache()) {
+      console.info("getSupportedAssets: refreshing cache");
       const assets = await fetchAll<IAsset>(async (page) => {
         const results = await this.clients.admin.NCW.getSupportedAssets(page);
         const [rates, metadata] = await Promise.all([
@@ -68,11 +75,16 @@ export class AssetService {
             iconUrl: metadata[asset.symbol]?.logo,
           })),
         };
-      }, 50);
-      this.supportedAssets = assets;
+      }, 200);
+
+      this.supportedAssetsCache = {
+        assets,
+        dateFetched: new Date(),
+        ttl: AssetService.SUPPORTED_ASSETS_CACHE_DEFAULT_TTL,
+      };
     }
 
-    return this.supportedAssets;
+    return this.supportedAssetsCache.assets;
   }
 
   async findAll(
@@ -185,5 +197,23 @@ export class AssetService {
       assetId,
     );
     return addresses.data[0];
+  }
+
+  private _shouldRefreshSupportedAssetsCache(): boolean {
+    if (
+      !this.supportedAssetsCache?.assets ||
+      !this.supportedAssetsCache?.dateFetched
+    ) {
+      console.info("supportedAssets cache dateFetched is empty");
+      return true;
+    }
+
+    const now = new Date();
+    const ttl =
+      this.supportedAssetsCache.ttl ||
+      AssetService.SUPPORTED_ASSETS_CACHE_DEFAULT_TTL;
+    return (
+      now.getTime() - this.supportedAssetsCache.dateFetched.getTime() > ttl
+    );
   }
 }
