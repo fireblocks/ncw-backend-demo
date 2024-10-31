@@ -1,4 +1,9 @@
-import { CollectionOwnership, Token, TokenWithBalance } from "fireblocks-sdk";
+import {
+  CollectionOwnership,
+  NFTOwnershipStatus,
+  Token,
+  TokenWithBalance,
+} from "fireblocks-sdk";
 
 const ownedNftsMock: TokenWithBalance[] = [
   {
@@ -17,6 +22,7 @@ const ownedNftsMock: TokenWithBalance[] = [
     ownershipLastUpdateTime: 1709475840,
     ncwId: "b53d5f62-b722-46d6-85f7-db6c3f37db53",
     ncwAccountId: 0,
+    status: NFTOwnershipStatus.LISTED,
   },
   {
     id: "NFT-c950363ce0f4dcc763e78be5f50b427cd2429185",
@@ -34,6 +40,7 @@ const ownedNftsMock: TokenWithBalance[] = [
     ownershipLastUpdateTime: 1709475864,
     ncwId: "b53d5f62-b722-46d6-85f7-db6c3f37db53",
     ncwAccountId: 0,
+    status: NFTOwnershipStatus.LISTED,
   },
 ];
 
