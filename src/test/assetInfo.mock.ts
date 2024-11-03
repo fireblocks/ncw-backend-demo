@@ -142,4 +142,13 @@ const assets: NCW.WalletAssetResponse[] = [
   SOL,
   WETH,
 ];
+
 export const assetInfoMock = Object.fromEntries(assets.map((a) => [a.id, a]));
+
+export const baseAssetInfoMock = Object.fromEntries(
+  assets.filter((a) => a.type === "BASE_ASSET").map((a) => [a.id, a]),
+);
+
+export const nonBaseAssetInfoMock = Object.fromEntries(
+  assets.filter((a) => a.type !== "BASE_ASSET").map((a) => [a.id, a]),
+);
