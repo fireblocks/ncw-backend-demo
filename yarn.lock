@@ -2836,10 +2836,10 @@ find-up@^5.0.0:
     locate-path "^6.0.0"
     path-exists "^4.0.0"
 
-fireblocks-sdk@^5.18.0:
-  version "5.18.0"
-  resolved "https://registry.yarnpkg.com/fireblocks-sdk/-/fireblocks-sdk-5.18.0.tgz#4eed9c662bea286446ded9edf463978500f75a33"
-  integrity sha512-ElFu5UlDlAjhDFH+AKCsTgnYlB6obAT2ySjyNv/SmXKvW2fcFAaJqvVTcWtKkr9QdsMLt3lH0Z0TRFjEhwxrOQ==
+fireblocks-sdk@^5.27.2:
+  version "5.32.0"
+  resolved "https://registry.yarnpkg.com/fireblocks-sdk/-/fireblocks-sdk-5.32.0.tgz#66d23cb50d9e08d25687825949b610bdaf61bbba"
+  integrity sha512-GnNMkSqNo+B1MhJ6TQRM2QCW655j1beZEN4lpwtlo00Opw8fn5N9D7GMAVI9b0pdGSwoEObn5SKwyMJddW41YA==
   dependencies:
     "@notabene/pii-sdk" "^1.17.0"
     axios "^1.6.0"
