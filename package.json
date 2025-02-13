@@ -33,7 +33,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "fireblocks-sdk": "^5.27.2",
+    "fireblocks-sdk": "^5.33.0",
     "jose": "^5.2.0",
     "lru-cache": "^10.0.1",
     "morgan": "^1.10.0",
