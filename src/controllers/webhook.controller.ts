@@ -72,6 +72,7 @@ export class WebhookController {
         case "EXTERNAL_WALLET_ASSET_ADDED":
         case "INTERNAL_WALLET_ASSET_ADDED":
         case "NCW_TRANSACTION_STATUS_UPDATED":
+        case "END_USER_WALLET_BALANCE_UPDATE":
           return res.status(200).send("ok");
 
         default:
