@@ -22,6 +22,7 @@ export class WebhookController {
       );
 
       switch (type) {
+        // TODO: Remove - not used anymore, was used for handling incoming messages
         case "NCW_DEVICE_MESSAGE": {
           const { walletId, deviceId, physicalDeviceId, data } = req.body;
           await handleNcwDeviceMessage(

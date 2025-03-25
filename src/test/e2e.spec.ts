@@ -10,7 +10,13 @@ import { Device } from "../model/device";
 import { Message } from "../model/message";
 import { User } from "../model/user";
 import { Wallet } from "../model/wallet";
-import { FireblocksSDK, NCW, TransactionStatus } from "fireblocks-sdk";
+import {
+  FireblocksSDK,
+  NCW,
+  PageDetails,
+  TransactionResponse,
+  TransactionStatus,
+} from "fireblocks-sdk";
 import { anyString, anything, instance, mock, verify, when } from "ts-mockito";
 import { sign, Algorithm } from "jsonwebtoken";
 import { MessageSubscriber } from "../subscribers/message.subscriber";
@@ -27,10 +33,12 @@ import { NcwSdk } from "fireblocks-sdk/dist/src/ncw-sdk";
 import { TAssetSummary } from "../services/asset.service";
 import { mockInfoResponse } from "./mockInfoResponse";
 import { Passphrase, PassphraseLocation } from "../model/passphrase";
-import { DEFAULT_ORIGIN } from "../server";
+import { DEFAULT_ORIGIN, init } from "../server";
 import { symbolMockTestTransform } from "../util/cmc/symbolMockTestTransform";
 
 import { AuthOptions } from "../middleware/jwt";
+import { transactionMock } from "./mockTransaction";
+import { PollingMode, PollingService } from "../services/polling.service";
 import {
   ownedAssetsMock,
   ownedCollectionsMock,
@@ -96,6 +104,8 @@ describe("e2e", () => {
   let publicKey: string, privateKey: string;
 
   beforeAll(async () => {
+    await init();
+
     const pair = await generateKeyPair("rsa", {
       modulusLength: 1024,
       publicKeyEncoding: {
@@ -133,6 +143,7 @@ describe("e2e", () => {
       },
       publicKey,
       DEFAULT_ORIGIN,
+      false,
     );
 
     app = container.app;
@@ -172,7 +183,7 @@ describe("e2e", () => {
 
   async function getDevices() {
     return await request(app)
-      .get(`/api/devices/`)
+      .get("/api/devices/")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -214,7 +225,7 @@ describe("e2e", () => {
 
   async function getPassphrases() {
     return await request(app)
-      .get(`/api/passphrase/`)
+      .get("/api/passphrase/")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -295,7 +306,7 @@ describe("e2e", () => {
 
   async function getWallets() {
     return await request(app)
-      .get(`/api/wallets/`)
+      .get("/api/wallets/")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
   }
@@ -335,7 +346,7 @@ describe("e2e", () => {
     const signature = signer.sign(privateKey, "base64");
 
     return await request(app)
-      .post(`/api/webhook`)
+      .post("/api/webhook")
       .send(payload)
       .set("fireblocks-signature", signature)
       .expect(200);
@@ -358,65 +369,12 @@ describe("e2e", () => {
     txId = randomUUID(),
     type = "TRANSACTION_CREATED",
     status = TransactionStatus.CONFIRMING,
+    date?: number,
   ) {
     const payload = {
       type,
       timestamp: new Date().valueOf(),
-      data: {
-        id: txId,
-        createdAt: new Date().valueOf(),
-        lastUpdated: new Date().valueOf(),
-        assetId: "BTC_TEST",
-        source: {
-          id: "0",
-          type: "END_USER_WALLET",
-          walletId,
-          name: "External",
-          subType: "",
-        },
-        destination: {
-          id: "0",
-          type: "VAULT_ACCOUNT",
-          name: "Default",
-          subType: "",
-        },
-        amount: 0.00001,
-        networkFee: 0.00000141,
-        netAmount: 0.00001,
-        sourceAddress: "tb1q5c3y5g4mm2ge6zvavtvwzuc7nl9jt5knvk36sk",
-        destinationAddress: "tb1qrscwnskfaejtthnh4ds8h4wu6fcxhhgfjj2xay",
-        destinationAddressDescription: "",
-        destinationTag: "",
-        status: status,
-        txHash:
-          "0ca2e172b36359687981786114034e4c89379b23cd5137b1b6b0f9ee41d90669",
-        subStatus: "PENDING_BLOCKCHAIN_CONFIRMATIONS",
-        signedBy: [],
-        createdBy: "",
-        rejectedBy: "",
-        amountUSD: 0,
-        addressType: "",
-        note: "",
-        exchangeTxId: "",
-        requestedAmount: 0.00001,
-        feeCurrency: "BTC_TEST",
-        operation: "TRANSFER",
-        customerRefId: null,
-        numOfConfirmations: 0,
-        amountInfo: {
-          amount: "0.00001",
-          requestedAmount: "0.00001",
-          netAmount: "0.00001",
-          amountUSD: null,
-        },
-        feeInfo: { networkFee: "0.00000141" },
-        destinations: [],
-        externalTxId: null,
-        blockInfo: { blockHash: null },
-        signedMessages: [],
-        index: 1,
-        assetType: "BASE_ASSET",
-      },
+      data: transactionMock(txId, status, walletId, date),
     };
     await webhookPush(payload);
   }
@@ -503,7 +461,7 @@ describe("e2e", () => {
     await msgProm;
   });
 
-  it("should handle transactions", async () => {
+  it("transactions flow - BE uses webhook", async () => {
     const txId = "txId123";
     const txId2 = "txId1234";
 
@@ -545,6 +503,147 @@ describe("e2e", () => {
         ])
       ).body,
     ).toHaveLength(2);
+  });
+
+  it("transactions flow - BE uses polling", async () => {
+    const txId = "txId123";
+    const txId2 = "txId1234";
+
+    await createUser();
+    await createWallet();
+
+    expect((await getTransactions()).body).toEqual([]);
+
+    when(
+      fireblocksSdk.getTransactionsWithPageInfo(anything(), anything()),
+    ).thenResolve({
+      transactions: [
+        transactionMock(
+          txId,
+          TransactionStatus.CONFIRMING,
+        ) as unknown as TransactionResponse,
+      ],
+      pageDetails: {} as PageDetails,
+    });
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
+    expect((await getTransactions()).body).toMatchObject([{ id: txId }]);
+
+    when(
+      fireblocksSdk.getTransactionsWithPageInfo(anything(), anything()),
+    ).thenResolve({
+      transactions: [
+        transactionMock(
+          txId,
+          TransactionStatus.PENDING_SIGNATURE,
+        ) as unknown as TransactionResponse,
+      ],
+      pageDetails: {} as PageDetails,
+    });
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
+    expect(
+      (await getTransactions([TransactionStatus.CONFIRMING])).body,
+    ).toEqual([]);
+    expect((await getTransaction(txId)).body).toMatchObject({
+      id: txId,
+      status: TransactionStatus.PENDING_SIGNATURE,
+    });
+
+    when(
+      fireblocksSdk.getTransactionsWithPageInfo(anything(), anything()),
+    ).thenResolve({
+      transactions: [
+        transactionMock(
+          txId2,
+          TransactionStatus.SUBMITTED,
+        ) as unknown as TransactionResponse,
+      ],
+      pageDetails: {} as PageDetails,
+    });
+    await PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT);
+    const res = (
+      await getTransactions([
+        TransactionStatus.CANCELLED,
+        TransactionStatus.CONFIRMING,
+        TransactionStatus.PENDING_SIGNATURE,
+        TransactionStatus.SUBMITTED,
+      ])
+    ).body;
+    console.log(res);
+    expect(
+      (
+        await getTransactions([
+          TransactionStatus.CANCELLED,
+          TransactionStatus.CONFIRMING,
+          TransactionStatus.PENDING_SIGNATURE,
+          TransactionStatus.SUBMITTED,
+        ])
+      ).body,
+    ).toHaveLength(2);
+  });
+
+  it("transactions flow - BE uses both polling AND webhook", async () => {
+    const txId = "txId123";
+
+    await createUser();
+    await createWallet();
+
+    expect((await getTransactions()).body).toEqual([]);
+
+    // 1. creating tx "concurrently"
+    when(
+      fireblocksSdk.getTransactionsWithPageInfo(anything(), anything()),
+    ).thenResolve({
+      transactions: [
+        transactionMock(
+          txId,
+          TransactionStatus.CONFIRMING,
+        ) as unknown as TransactionResponse,
+      ],
+      pageDetails: {} as PageDetails,
+    });
+    await Promise.all([
+      PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT),
+      webhookTransaction(
+        txId,
+        "TRANSACTION_CREATED",
+        TransactionStatus.CONFIRMING,
+      ),
+    ]);
+    expect((await getTransactions()).body).toMatchObject([
+      { id: txId, status: TransactionStatus.CONFIRMING },
+    ]);
+
+    // 2. updating tx "concurrently"
+    const now = Date.now();
+    when(
+      fireblocksSdk.getTransactionsWithPageInfo(anything(), anything()),
+    ).thenResolve({
+      transactions: [
+        transactionMock(
+          txId,
+          TransactionStatus.PENDING_SIGNATURE,
+          walletId,
+          now,
+        ) as unknown as TransactionResponse,
+      ],
+      pageDetails: {} as PageDetails,
+    });
+    await Promise.all([
+      PollingService.getInstance()["pollAndUpdate"](PollingMode.RECENT),
+      webhookTransaction(
+        txId,
+        "TRANSACTION_STATUS_UPDATED",
+        TransactionStatus.PENDING_SIGNATURE,
+        now,
+      ),
+    ]);
+    expect((await getTransactions()).body).toMatchObject([
+      {
+        id: txId,
+        status: TransactionStatus.PENDING_SIGNATURE,
+        lastUpdated: now,
+      },
+    ]);
   });
 
   it("should handle polling transactions", async () => {

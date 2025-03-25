@@ -1,7 +1,7 @@
 import { createApp } from "./app";
 import { FireblocksSDK } from "fireblocks-sdk";
 import dotenv from "dotenv";
-import { AppDataSource } from "./data-source";
+import { appDataSource } from "./data-source";
 import CoinMarketcap from "coinmarketcap-js";
 import ms from "ms";
 import { staleMessageCleanup } from "./services/message.service";
@@ -24,7 +24,10 @@ dotenv.config();
 
 const port = process.env.PORT;
 
-export const DEFAULT_ORIGIN = [
+// Warning: Polling is not to be used in a production environment. Use webhooks instead.
+const enablePolling = Boolean(process.env.ENABLE_POLLING);
+
+const DEFAULT_ORIGIN = [
   "http://localhost:5173",
   "https://fireblocks.github.io",
 ];
@@ -73,41 +76,6 @@ const clients = {
 
 const origin = getOriginFromEnv();
 
-AppDataSource.initialize()
-  .then(async () => {
-    console.log("Data Source has been initialized!");
-
-    const authOptions: AuthOptions = await createAuthOptions();
-    const { app, socketIO } = createApp(
-      authOptions,
-      clients,
-      webhookPublicKey,
-      origin,
-    );
-    const server = app.listen(port, () => {
-      console.log(`Server is running at http://localhost:${port}`);
-
-      // should be distributed scheduled task in production
-      setInterval(() => {
-        void staleMessageCleanup();
-      }, ms("1 hour"));
-    });
-
-    // set higher keepalive timeout (default: 5s)
-    server.keepAliveTimeout = 60_000;
-
-    socketIO.attach(server, {
-      cors: {
-        origin,
-        methods: ["GET", "POST"],
-      },
-    });
-  })
-  .catch((err) => {
-    console.error("Error during Data Source initialization", err);
-    process.exit(1);
-  });
-
 async function createAuthOptions() {
   let authOptions: AuthOptions;
 
@@ -133,3 +101,43 @@ async function createAuthOptions() {
   }
   return authOptions;
 }
+
+async function init() {
+  try {
+    await appDataSource.initialize();
+
+    console.log("Data Source has been initialized!");
+
+    const authOptions: AuthOptions = await createAuthOptions();
+    const { app, socketIO } = createApp(
+      authOptions,
+      clients,
+      webhookPublicKey,
+      origin,
+      enablePolling,
+    );
+    const server = app.listen(port, () => {
+      console.log(`Server is running at http://localhost:${port}`);
+
+      // should be distributed scheduled task in production
+      setInterval(() => {
+        void staleMessageCleanup();
+      }, ms("1 hour"));
+    });
+
+    // set higher keepalive timeout (default: 5s)
+    server.keepAliveTimeout = 60_000;
+
+    socketIO.attach(server, {
+      cors: {
+        origin,
+        methods: ["GET", "POST"],
+      },
+    });
+  } catch (err) {
+    console.error("Error during Data Source initialization", err);
+    process.exit(1);
+  }
+}
+
+export { init, DEFAULT_ORIGIN };
